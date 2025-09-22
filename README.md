@@ -37,6 +37,8 @@ Farmculture is an friendly designer to help farmers with real-time insights, gui
 
 ##  Setup Instructions
 # 1. Install Node JS
+if installed check this
+node-v
 # 2. Create a React + Vite
 npm create vite@latest
 # 3. Navigate your folder
