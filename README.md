@@ -71,3 +71,7 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 # 6. Start the Development Server
 npm run dev
+
+# 7. Vercel Deployment
+import your github in vercel it will do the rest make sure fix your bugs
+https://vercel.com/saivimenthanvlai/farmcultureai/8145Syz56dvJoJViZ9yJztGQLq4c
