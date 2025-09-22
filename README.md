@@ -42,9 +42,9 @@ npm create vite@latest
 # 3. Navigate your folder
 cd your_project_folder
 npm install
-#4. Install Firebase if needed(Backend)
+# 4. Install Firebase if needed(Backend)
 npm install firebase
-#5. Initialize the Firebase Settings
+# 5. Initialize the Firebase Settings
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
@@ -66,5 +66,5 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
-#6. Start the Development Server
+# 6. Start the Development Server
 npm run dev
