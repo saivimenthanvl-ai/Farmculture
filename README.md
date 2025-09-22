@@ -36,8 +36,35 @@ Farmculture is an friendly designer to help farmers with real-time insights, gui
 
 
 ##  Setup Instructions
-# 1. Install dependencies
+# 1. Install Node JS
+# 2. Create a React + Vite
+npm create vite@latest
+# 3. Navigate your folder
+cd your_project_folder
 npm install
+#4. Install Firebase if needed(Backend)
+npm install firebase
+#5. Initialize the Firebase Settings
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-# 2. Run the app (development)
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "",
+  authDomain: "firebaseapp.com",
+  projectId: "",
+  storageBucket: "firebasestorage.app",
+  messagingSenderId: "",
+  appId: "",
+  measurementId: ""
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+#6. Start the Development Server
 npm run dev
