@@ -41,6 +41,7 @@ Farmculture is an friendly designer to help farmers with real-time insights, gui
 npm create vite@latest
 # 3. Navigate your folder
 cd your_project_folder
+
 npm install
 # 4. Install Firebase if needed(Backend)
 npm install firebase
