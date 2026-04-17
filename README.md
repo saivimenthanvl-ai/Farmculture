@@ -1,4 +1,4 @@
-# Farmculture - Your Friendly Agriculture
+# Farmculture
 
 Farmculture is an friendly designer to help farmers with real-time insights, guidance, and decision-making support. It integrates artificial intelligence, weather data API and agricultural knowledge to enhance crop productivity and ensure sustainable farming practices.
 
