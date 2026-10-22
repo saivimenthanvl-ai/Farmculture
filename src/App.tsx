@@ -1,6 +1,6 @@
 // src/App.tsx
 import { BrowserRouter, Routes, Route, Link, Outlet, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import Header from "./components/Header";
 import { FeatureCard } from "./components/FeatureCard";
@@ -55,40 +55,61 @@ import {
   Package,
 } from "lucide-react";
 
-/** Shared Layout with Header, Back-to-Home button on subroutes, and Footer */
+import { AppSidebar, MobileTabBar } from "./components/navigation/AppSidebar";
+import { CommandPalette } from "./components/ui/CommandPalette";
+
+/** Shared Layout with AppSidebar, Sticky Header, Command Palette, and MobileTabBar */
 function AppLayout() {
   const [isListening, setIsListening] = useState(false);
-  const location = useLocation();
-  const { t } = useLanguage();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
-  const isHome = location.pathname === "/";
+  // Listen for Ctrl+K / Cmd+K to toggle command palette
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex flex-col justify-between">
-      <Header
-        isListening={isListening}
-        onToggleListening={() => setIsListening((v) => !v)}
+    <div className="min-h-screen bg-[#F6F4EE] flex text-[#1B1F1C]">
+      {/* App Sidebar */}
+      <AppSidebar
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      <div className="flex-1">
-        {!isHome && (
-          <div className="container mx-auto px-4 pt-6">
-            <Link
-              to="/"
-              className="inline-flex items-center space-x-2 text-green-700 hover:text-green-800 font-medium bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow transition-all duration-200"
-            >
-              <span>←</span>
-              <span>{t("Back To Home")}</span>
-            </Link>
-          </div>
-        )}
+      {/* Main Workspace Body */}
+      <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+        <Header
+          isListening={isListening}
+          onToggleListening={() => setIsListening((v) => !v)}
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
+        />
 
-        <main className="container mx-auto px-4 py-8">
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto">
           <Outlet context={{ isListening, setIsListening }} />
         </main>
+
+        <Footer />
       </div>
 
-      <Footer />
+      {/* Mobile Tab Bar */}
+      <MobileTabBar />
+
+      {/* Command Palette Modal */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+      />
     </div>
   );
 }
