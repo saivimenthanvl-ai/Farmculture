@@ -119,26 +119,44 @@ function HomePage() {
   const { t } = useLanguage();
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">{t("welcome")}</h1>
-        <p className="text-gray-600 text-xl mb-2">{t("subtitle")}</p>
-        <p className="text-gray-500 text-lg">{t("tagline")}</p>
+    <div className="max-w-7xl mx-auto space-y-8">
+      {/* Hero Welcome Banner */}
+      <div className="bg-[#0F2E24] text-white rounded-3xl p-6 sm:p-10 border border-[#1C4A3A] shadow-md relative overflow-hidden">
+        <div className="relative z-10 max-w-2xl space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1C4A3A] border border-[#2F9E6B]/40 text-[#9BE564] text-xs font-bold uppercase tracking-wider">
+            <span>●</span>
+            <span>Agricultural Intelligence Platform</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-display text-white">
+            {t("welcome")}
+          </h1>
+          <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed">
+            {t("subtitle")}
+          </p>
+          <p className="text-xs sm:text-sm text-emerald-200/70 font-mono">
+            {t("tagline")}
+          </p>
+        </div>
       </div>
 
       {/* Core Features */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          {t("agriculture_tools")}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-[#0F2E24]">
+              {t("agriculture_tools")}
+            </h2>
+            <p className="text-xs text-[#787266]">Essential daily operational tools for cultivators</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link to="/crop-diagnosis" className="block">
             <FeatureCard
               icon={Camera}
               title={t("crop_diagnosis")}
               description={t("crop_diagnosis_desc")}
-              badge="Verified & Available"
-              badgeColor="green"
+              badge="Verified"
+              badgeColor="lime"
             />
           </Link>
           <Link to="/market-prices" className="block">
@@ -146,7 +164,7 @@ function HomePage() {
               icon={TrendingUp}
               title={t("market_prices")}
               description={t("market_prices_desc")}
-              badge="Verified & Available"
+              badge="Live APMC"
               badgeColor="green"
             />
           </Link>
@@ -155,7 +173,7 @@ function HomePage() {
               icon={FileText}
               title={t("govt_schemes")}
               description={t("govt_schemes_desc")}
-              badge="Verified & Available"
+              badge="Verified"
               badgeColor="green"
             />
           </Link>
@@ -165,7 +183,7 @@ function HomePage() {
               title={t("voice_assistant")}
               description={t("voice_assistant_desc")}
               badge={t("home.badgeVoice")}
-              badgeColor="blue"
+              badgeColor="teal"
             />
           </Link>
           <Link to="/restaurants" className="block">
@@ -190,18 +208,23 @@ function HomePage() {
       </div>
 
       {/* Advanced Features & Precision Roadmap */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
-          {t("advanced_features")}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-[#0F2E24]">
+              {t("advanced_features")}
+            </h2>
+            <p className="text-xs text-[#787266]">Empirical telemetry and predictive agronomic models</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link to="/predictor" className="block">
             <FeatureCard
               icon={Brain}
               title={t("market_predictor")}
               description={t("market_predictor_desc")}
               badge={t("home.badgePredictor")}
-              badgeColor="blue"
+              badgeColor="teal"
             />
           </Link>
           <Link to="/crop-health" className="block">
@@ -210,7 +233,7 @@ function HomePage() {
               title={t("crop_health_monitor")}
               description={t("crop_health_monitor_desc")}
               badge={t("home.badgeHealth")}
-              badgeColor="blue"
+              badgeColor="teal"
             />
           </Link>
           <Link to="/drones" className="block">
@@ -228,7 +251,7 @@ function HomePage() {
               title={t("smart_irrigation")}
               description={t("smart_irrigation_desc")}
               badge={t("home.badgeIrrigation")}
-              badgeColor="blue"
+              badgeColor="teal"
             />
           </Link>
           <Link to="/weather" className="block">
@@ -252,63 +275,32 @@ function HomePage() {
         </div>
       </div>
 
-      {/* Factual Operational Architecture (Replaces unverified marketing superlatives) */}
-      <div className="mb-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-center">
-        <div className="p-5 bg-white rounded-xl border border-gray-200 shadow-xs">
-          <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">{t("home.mandiSourced")}</div>
-          <div className="text-lg font-bold text-gray-900">{t("home.apmcProvenance")}</div>
-          <p className="text-xs text-gray-500 mt-1">{t("home.mandiDesc")}</p>
+      {/* Factual Operational Architecture Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="p-4 bg-white rounded-2xl border border-[#E7E3D8]">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#1C4A3A] mb-1">{t("home.mandiSourced")}</div>
+          <div className="text-sm font-bold text-[#0F2E24]">{t("home.apmcProvenance")}</div>
+          <p className="text-xs text-[#787266] mt-1 leading-relaxed">{t("home.mandiDesc")}</p>
         </div>
-        <div className="p-5 bg-white rounded-xl border border-gray-200 shadow-xs">
-          <div className="text-xs font-bold uppercase tracking-wider text-blue-700 mb-1">{t("home.evidenceBased")}</div>
-          <div className="text-lg font-bold text-gray-900">{t("home.cropDiagTitle")}</div>
-          <p className="text-xs text-gray-500 mt-1">{t("home.cropDiagDesc")}</p>
+        <div className="p-4 bg-white rounded-2xl border border-[#E7E3D8]">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#3E8E8A] mb-1">{t("home.evidenceBased")}</div>
+          <div className="text-sm font-bold text-[#0F2E24]">{t("home.cropDiagTitle")}</div>
+          <p className="text-xs text-[#787266] mt-1 leading-relaxed">{t("home.cropDiagDesc")}</p>
         </div>
-        <div className="p-5 bg-white rounded-xl border border-gray-200 shadow-xs">
-          <div className="text-xs font-bold uppercase tracking-wider text-purple-700 mb-1">{t("home.multilingual")}</div>
-          <div className="text-lg font-bold text-gray-900">{t("home.globalRegional")}</div>
-          <p className="text-xs text-gray-500 mt-1">{t("home.multilingualDesc")}</p>
+        <div className="p-4 bg-white rounded-2xl border border-[#E7E3D8]">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#2F9E6B] mb-1">{t("home.multilingual")}</div>
+          <div className="text-sm font-bold text-[#0F2E24]">{t("home.globalRegional")}</div>
+          <p className="text-xs text-[#787266] mt-1 leading-relaxed">{t("home.multilingualDesc")}</p>
         </div>
-        <div className="p-5 bg-white rounded-xl border border-gray-200 shadow-xs">
-          <div className="text-xs font-bold uppercase tracking-wider text-amber-700 mb-1">{t("home.zeroLockin")}</div>
-          <div className="text-lg font-bold text-gray-900">{t("home.openDirectory")}</div>
-          <p className="text-xs text-gray-500 mt-1">{t("home.openDirectoryDesc")}</p>
+        <div className="p-4 bg-white rounded-2xl border border-[#E7E3D8]">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#E9A23B] mb-1">{t("home.zeroLockin")}</div>
+          <div className="text-sm font-bold text-[#0F2E24]">{t("home.openDirectory")}</div>
+          <p className="text-xs text-[#787266] mt-1 leading-relaxed">{t("home.openDirectoryDesc")}</p>
         </div>
       </div>
 
-      {/* Genuine Community Reviews Section */}
+      {/* Community Reviews Section */}
       <ReviewCarousel />
-
-      {/* Revolutionary Highlights */}
-      <section className="mt-8">
-        <div className="rounded-2xl p-[1px] bg-gradient-to-r from-green-600 via-green-600 to-green-600">
-          <div className="rounded-2xl bg-white/5 backdrop-blur-sm px-6 py-8">
-            <h2 className="text-center text-white text-2xl md:text-3xl font-bold mb-6">
-              {t("revolutionary_agriculture")}
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
-              <div className="rounded-xl bg-white/10 backdrop-blur-md p-6 shadow-sm">
-                <Brain className="w-8 h-8 mb-3 opacity-90" />
-                <h3 className="font-semibold">{t("market_prediction")}</h3>
-                <p className="mt-1 text-white/90 text-sm">{t("market_prediction_desc")}</p>
-              </div>
-
-              <div className="rounded-xl bg-white/10 backdrop-blur-md p-6 shadow-sm">
-                <Satellite className="w-8 h-8 mb-3 opacity-90" />
-                <h3 className="font-semibold">{t("satellite_monitoring")}</h3>
-                <p className="mt-1 text-white/90 text-sm">{t("satellite_monitoring_desc")}</p>
-              </div>
-
-              <div className="rounded-xl bg-white/10 backdrop-blur-md p-6 shadow-sm">
-                <Package className="w-8 h-8 mb-3 opacity-90" />
-                <h3 className="font-semibold">{t("blockchain_transparency")}</h3>
-                <p className="mt-1 text-white/90 text-sm">{t("blockchain_transparency_desc")}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

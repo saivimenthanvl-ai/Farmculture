@@ -21,9 +21,11 @@ import {
   Package,
 } from "lucide-react";
 
+import { formatCurrencyAmount } from "@/lib/currencyService";
+
 export default function DashboardPage() {
   const { user, friendlyName } = useAuth();
-  const { t, formatCurrency } = useLocalization();
+  const { t, interfaceLocale, displayCurrency } = useLocalization();
 
   const farmerName = friendlyName || user?.displayName || user?.email?.split("@")[0] || "Farmer";
 
@@ -40,7 +42,7 @@ export default function DashboardPage() {
     },
     {
       title: "Top Mandi Price",
-      value: formatCurrency ? formatCurrency(2850) : "₹2,850",
+      value: formatCurrencyAmount(2850, displayCurrency, interfaceLocale),
       unit: "/qtl",
       delta: "+4.8%",
       deltaType: "increase" as const,

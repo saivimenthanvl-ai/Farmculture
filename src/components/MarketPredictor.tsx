@@ -70,11 +70,11 @@ function seeded(seed: string) {
 function generateSeries(commodityId: CommodityId, days: number): PricePoint[] {
   const today = new Date();
   const comm = COMMODITIES.find((c) => c.id === commodityId) || COMMODITIES[0];
-  const base = comm.base;
+  const base: number = comm.base;
   const rnd = seeded(commodityId);
 
   const series: PricePoint[] = [];
-  let price = base;
+  let price: number = base;
 
   for (let i = 0; i < days; i++) {
     const date = new Date(today);

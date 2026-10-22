@@ -1,5 +1,5 @@
-import React from 'react';
-import type { LucideIcon } from 'lucide-react';
+import React from "react";
+import type { LucideIcon } from "lucide-react";
 
 interface FeatureCardProps {
   icon: LucideIcon;
@@ -8,49 +8,51 @@ interface FeatureCardProps {
   onClick?: () => void;
   disabled?: boolean;
   badge?: string;
-  badgeColor?: "green" | "blue" | "amber" | "purple";
+  badgeColor?: "green" | "blue" | "amber" | "purple" | "teal" | "lime";
 }
 
-export const FeatureCard: React.FC<FeatureCardProps> = ({ 
-  icon: Icon, 
-  title, 
-  description, 
-  onClick, 
+export const FeatureCard: React.FC<FeatureCardProps> = ({
+  icon: Icon,
+  title,
+  description,
+  onClick,
   disabled = false,
   badge,
-  badgeColor = "green"
+  badgeColor = "green",
 }) => {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`w-full p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 text-left border-2 border-transparent ${
-        disabled 
-          ? 'opacity-50 cursor-not-allowed' 
-          : 'hover:border-green-200 hover:scale-105 active:scale-95'
+    <div
+      onClick={disabled ? undefined : onClick}
+      className={`w-full p-5 bg-white rounded-2xl border border-[#E7E3D8] hover:border-[#9BE564] hover:shadow-md transition-all duration-200 text-left cursor-pointer flex flex-col justify-between ${
+        disabled ? "opacity-50 cursor-not-allowed" : "hover:-translate-y-0.5 active:translate-y-0"
       }`}
     >
-      <div className="flex items-start space-x-4">
-        <div className="p-3 bg-green-100 rounded-lg">
-          <Icon className="w-6 h-6 text-green-600" />
+      <div className="flex items-start gap-3.5">
+        <div className="p-2.5 bg-[#FAF9F5] border border-[#E7E3D8] rounded-xl text-[#1C4A3A] shrink-0">
+          <Icon className="w-5 h-5 text-[#1C4A3A]" />
         </div>
-        <div className="flex-1">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <h3 className="font-semibold text-gray-800 text-lg">{title}</h3>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <h3 className="font-bold text-[#0F2E24] text-sm tracking-tight truncate">{title}</h3>
             {badge && (
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                badgeColor === "green" ? "bg-emerald-100 text-emerald-800 border border-emerald-300" :
-                badgeColor === "blue" ? "bg-blue-100 text-blue-800 border border-blue-300" :
-                badgeColor === "purple" ? "bg-purple-100 text-purple-800 border border-purple-300" :
-                "bg-amber-100 text-amber-800 border border-amber-300"
-              }`}>
+              <span
+                className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
+                  badgeColor === "lime" || badgeColor === "green"
+                    ? "bg-[#E8F9DC] text-[#0F2E24] border border-[#9BE564]/50"
+                    : badgeColor === "amber"
+                    ? "bg-[#FDF4E7] text-[#E9A23B] border border-[#E9A23B]/40"
+                    : "bg-[#FAF9F5] text-[#1C4A3A] border border-[#3E8E8A]/40"
+                }`}
+              >
                 {badge}
               </span>
             )}
           </div>
-          <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
+          <p className="text-[#787266] text-xs leading-relaxed line-clamp-2">{description}</p>
         </div>
       </div>
-    </button>
+    </div>
   );
 };
+
+export default FeatureCard;
