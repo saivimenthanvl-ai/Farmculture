@@ -1,7 +1,24 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Camera, Upload, AlertCircle, CheckCircle, Loader, ShieldAlert, Info, History, ArrowRight } from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  Camera,
+  Upload,
+  AlertCircle,
+  CheckCircle,
+  Loader,
+  ShieldAlert,
+  Info,
+  History,
+  PhoneCall,
+  ExternalLink,
+  ChevronRight,
+  Leaf,
+  Sparkles,
+  RefreshCw,
+} from "lucide-react";
+import { useLocalization } from "@/contexts/LocalizationContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/Badge";
+import { Callout } from "@/components/ui/Callout";
 import {
   validateCropImage,
   analyzeCropLeaf,
@@ -13,7 +30,7 @@ import {
 } from "@/lib/cropDiagnosisService";
 
 export const CropDiagnosis: React.FC = () => {
-  const { t } = useLanguage();
+  const { t } = useLocalization();
   const { user } = useAuth();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -58,7 +75,7 @@ export const CropDiagnosis: React.FC = () => {
     if (file) {
       const validation = validateCropImage(file);
       if (!validation.valid) {
-        setValidationError(validation.error || "Invalid file");
+        setValidationError(validation.error || "Invalid file format");
         setSelectedImage(null);
         setSelectedFile(null);
         return;
@@ -86,7 +103,6 @@ export const CropDiagnosis: React.FC = () => {
       const result = await analyzeCropLeaf(img || {});
       setAssessment(result);
 
-      // If user is authenticated and diagnosis was reached, persist to user's assessment history
       if (user?.uid && result.status !== "abstain") {
         setPersisting(true);
         try {
@@ -110,77 +126,75 @@ export const CropDiagnosis: React.FC = () => {
     }
   };
 
-  const getSeverityBadge = (severity?: "low" | "medium" | "high") => {
-    switch (severity) {
-      case "low":
-        return <span className="px-3 py-1 rounded-full text-xs font-semibold text-green-700 bg-green-100">LOW RISK</span>;
-      case "medium":
-        return <span className="px-3 py-1 rounded-full text-xs font-semibold text-yellow-800 bg-yellow-100">MODERATE RISK</span>;
-      case "high":
-        return <span className="px-3 py-1 rounded-full text-xs font-semibold text-red-700 bg-red-100">HIGH RISK</span>;
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-lg">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
-          {t("cropDiag.title")}
-        </h2>
-        <p className="text-gray-600">{t("cropDiag.subtitle")}</p>
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 text-xs rounded-full font-medium border border-emerald-200">
-            <Info className="w-3.5 h-3.5" />
-            <span>Evidence-Based Inspection &amp; Abstention Enabled</span>
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7E3D8]">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#1C4A3A]">
+              Agronomic Pathology Lab
+            </span>
+            <span className="text-[#A8A092]">·</span>
+            <Badge variant="lime" dot>
+              AI Vision Model Active
+            </Badge>
           </div>
-          {user?.uid && (
-            <button
-              onClick={() => setShowHistory((v) => !v)}
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-full font-medium transition-colors"
-              type="button"
-            >
-              <History className="w-3.5 h-3.5" />
-              <span>{showHistory ? "Back to Scanner" : `My Diagnostic History (${history.length})`}</span>
-            </button>
-          )}
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F2E24] tracking-tight font-display">
+            {t("cropDiag.title") || "Crop Disease Foliar Diagnosis"}
+          </h1>
+          <p className="text-xs sm:text-sm text-[#787266] mt-0.5">
+            {t("cropDiag.subtitle") || "Instant chromatic leaf diagnostic scanning with KVK agronomist advisory workflows."}
+          </p>
         </div>
+
+        {user?.uid && (
+          <button
+            onClick={() => setShowHistory((v) => !v)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-[#E7E3D8] hover:border-[#1C4A3A] text-xs font-bold text-[#0F2E24] transition-colors shadow-2xs self-start sm:self-auto"
+          >
+            <History className="w-4 h-4 text-[#1C4A3A]" />
+            <span>{showHistory ? "Diagnostic Scanner" : `History (${history.length})`}</span>
+          </button>
+        )}
       </div>
 
       {showHistory ? (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-            <h3 className="font-bold text-gray-800 text-base">Your Diagnostic Records</h3>
-            <span className="text-xs text-gray-500 font-mono">Owner UID: {user?.uid.slice(0, 6)}...</span>
+        /* Authenticated History View */
+        <div className="agri-card p-6 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E7E3D8]">
+            <h3 className="font-bold text-[#0F2E24] text-sm">Your Diagnostic Inspection Records</h3>
+            <span className="text-[11px] text-[#787266] font-mono">Owner UID: {user?.uid.slice(0, 8)}...</span>
           </div>
 
           {historyLoading ? (
-            <div className="py-8 text-center text-sm text-gray-500">
-              <Loader className="w-6 h-6 animate-spin mx-auto text-emerald-600 mb-2" />
-              <span>Retrieving authenticated assessment history...</span>
+            <div className="py-12 text-center text-xs text-[#787266]">
+              <Loader className="w-6 h-6 animate-spin mx-auto text-[#1C4A3A] mb-2" />
+              <span>Retrieving cloud-verified assessment history...</span>
             </div>
           ) : history.length === 0 ? (
-            <div className="py-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
-              <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-700">No previous assessments found</p>
-              <p className="text-xs text-gray-500 mt-1">Scan a crop leaf photograph to store your first diagnostic record.</p>
+            <div className="py-12 text-center rounded-xl border border-dashed border-[#D3CDC0] bg-[#FAF9F5]">
+              <Camera className="w-8 h-8 text-[#A8A092] mx-auto mb-2" />
+              <p className="text-xs font-bold text-[#0F2E24]">No previous assessments found</p>
+              <p className="text-[11px] text-[#787266] mt-1">Scan a crop leaf photograph to store your first diagnostic record.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {history.map((record) => (
-                <div key={record.id} className="p-4 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 text-sm transition-colors">
+                <div key={record.id} className="p-4 bg-[#FAF9F5] hover:bg-white rounded-xl border border-[#E7E3D8] text-xs transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="text-xs font-semibold text-gray-500 uppercase">{record.crop || "Unknown Crop"}</span>
-                      <h4 className="font-bold text-gray-900">{record.condition}</h4>
+                      <span className="text-[10px] font-bold text-[#787266] uppercase">{record.crop || "Specimen"}</span>
+                      <h4 className="font-bold text-[#0F2E24] text-sm mt-0.5">{record.condition}</h4>
                     </div>
-                    {getSeverityBadge(record.severity)}
+                    <Badge variant={record.severity === "high" ? "danger" : record.severity === "medium" ? "warning" : "success"}>
+                      {record.severity?.toUpperCase()} RISK
+                    </Badge>
                   </div>
-                  <p className="text-xs text-gray-600 mt-2 line-clamp-2">{record.treatment}</p>
-                  <div className="mt-3 pt-2 border-t border-gray-200 flex items-center justify-between text-[11px] text-gray-500">
+                  <p className="text-[#787266] mt-2 line-clamp-2 leading-relaxed">{record.treatment}</p>
+                  <div className="mt-3 pt-2 border-t border-[#E7E3D8] flex items-center justify-between text-[11px] text-[#A8A092]">
                     <span className="font-mono">{new Date(record.createdAt).toLocaleDateString()}</span>
-                    <span className="text-emerald-700 font-medium">Record ID: {record.id.slice(0, 10)}</span>
+                    <span className="text-[#1C4A3A] font-semibold">Record: {record.id.slice(0, 10)}</span>
                   </div>
                 </div>
               ))}
@@ -188,196 +202,225 @@ export const CropDiagnosis: React.FC = () => {
           )}
         </div>
       ) : (
-      <div className="space-y-6">
-        {/* Error message */}
-        {validationError && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
-            <div>
-              <h4 className="text-sm font-semibold text-red-800">Validation Notice</h4>
-              <p className="text-sm text-red-700 mt-0.5">{validationError}</p>
-            </div>
-          </div>
-        )}
+        /* Main Diagnostic Scanner */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Drag & Drop Upload Area (5 cols) */}
+          <div className="lg:col-span-5 space-y-4">
+            <div className="agri-card p-5">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#787266] mb-3">
+                Specimen Leaf Photography
+              </h2>
 
-        {/* Image Upload Area */}
-        <div
-          className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-emerald-500 transition-colors"
-          onClick={() => fileInputRef.current?.click()}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
-          }}
-        >
-          {selectedImage ? (
-            <div className="space-y-4">
-              <img
-                ref={imageElementRef}
-                src={selectedImage}
-                alt="Selected crop leaf"
-                crossOrigin="anonymous"
-                className="w-full max-h-80 object-contain mx-auto rounded-lg shadow-md"
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fileInputRef.current?.click();
+              {validationError && (
+                <div className="p-3 mb-3 bg-[#FAECE9] border border-[#C8553D]/40 rounded-xl flex items-start gap-2.5 text-xs text-[#C8553D]">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{validationError}</span>
+                </div>
+              )}
+
+              {/* Upload Drop Zone */}
+              <div
+                className="border-2 border-dashed border-[#D3CDC0] hover:border-[#1C4A3A] rounded-2xl p-6 text-center cursor-pointer transition-all bg-[#FAF9F5] hover:bg-white"
+                onClick={() => fileInputRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
                 }}
-                className="text-green-600 hover:text-green-700 font-medium text-sm inline-block"
-                type="button"
               >
-                Change Image
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex justify-center space-x-4">
-                <Camera className="w-12 h-12 text-gray-400" />
-                <Upload className="w-12 h-12 text-gray-400" />
+                {selectedImage ? (
+                  <div className="space-y-3">
+                    <img
+                      ref={imageElementRef}
+                      src={selectedImage}
+                      alt="Selected crop leaf"
+                      crossOrigin="anonymous"
+                      className="w-full max-h-64 object-contain mx-auto rounded-xl shadow-xs"
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="text-xs font-bold text-[#1C4A3A] hover:underline"
+                      type="button"
+                    >
+                      Change Specimen Image
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3 py-4">
+                    <div className="w-12 h-12 rounded-full bg-white border border-[#E7E3D8] flex items-center justify-center mx-auto text-[#1C4A3A] shadow-xs">
+                      <Camera className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[#0F2E24]">{t("cropDiag.dropPrompt") || "Drop leaf photo or tap to capture"}</p>
+                      <p className="text-[11px] text-[#787266] mt-0.5">JPEG, PNG, WebP up to 5MB</p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <p className="text-gray-600 font-medium">{t("cropDiag.dropPrompt")}</p>
-              <p className="text-xs text-gray-400">Supported: JPEG, PNG, WebP (max 5MB)</p>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+
+              {/* Action Button */}
+              {selectedImage && !assessment && (
+                <button
+                  onClick={analyzeCrop}
+                  disabled={isAnalyzing}
+                  className="w-full mt-4 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#0F2E24] hover:bg-[#1C4A3A] disabled:bg-[#A8A092] text-white text-xs font-bold transition-all shadow-xs"
+                  type="button"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader className="w-4 h-4 animate-spin" />
+                      <span>Inspecting Chlorophyll &amp; Lesions...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-[#9BE564]" />
+                      <span>Execute Foliar Diagnostic Scan</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
-          )}
-        </div>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          capture="environment"
-          onChange={handleImageUpload}
-          className="hidden"
-        />
-
-        {!selectedImage && (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
-            type="button"
-          >
-            {t("cropDiag.cta")}
-          </button>
-        )}
-
-        {selectedImage && !assessment && (
-          <button
-            onClick={analyzeCrop}
-            disabled={isAnalyzing}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
-            type="button"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader className="w-5 h-5 animate-spin" />
-                <span>Evaluating Image Quality &amp; Foliage...</span>
-              </>
-            ) : (
-              <>
-                <Camera className="w-5 h-5" />
-                <span>Analyze Plant Specimen</span>
-              </>
-            )}
-          </button>
-        )}
-
-        {/* Abstention State */}
-        {assessment && assessment.status === "abstain" && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 space-y-4">
-            <div className="flex items-center gap-3 text-amber-800">
-              <ShieldAlert className="w-6 h-6 text-amber-600 shrink-0" />
-              <h3 className="text-lg font-bold">Diagnosis Abstained</h3>
+            {/* Specimen Tips */}
+            <div className="p-4 rounded-xl bg-[#FAF9F5] border border-[#E7E3D8] text-xs text-[#787266] space-y-1.5">
+              <span className="font-bold text-[#0F2E24] block">Foliar Inspection Standard</span>
+              <p>• Photograph leaf in natural indirect daylight.</p>
+              <p>• Center visible pustules, blight halos, or necrotic lesions.</p>
+              <p>• Avoid photographing soil, boots, or shadowed canopy.</p>
             </div>
-            <p className="text-sm text-amber-900 leading-relaxed">
-              {assessment.explanation}
-            </p>
-            <div className="bg-white/80 p-3 rounded-lg border border-amber-200 text-xs text-amber-800 space-y-1">
-              <p className="font-semibold">Guidelines for a valid diagnosis:</p>
-              <ul className="list-disc list-inside space-y-0.5 text-gray-700">
-                <li>Take a close-up photograph of an actual plant leaf or fruit.</li>
-                <li>Avoid blurry shots, non-plant objects, animals, or dark environments.</li>
-                <li>Ensure the affected spots or discoloration are clearly visible.</li>
-              </ul>
-            </div>
-            <button
-              onClick={() => {
-                setSelectedImage(null);
-                setAssessment(null);
-              }}
-              className="text-sm font-semibold text-emerald-700 hover:text-emerald-800 underline"
-            >
-              Upload another photograph
-            </button>
           </div>
-        )}
 
-        {/* Diagnosis Results */}
-        {assessment && assessment.status === "diagnosed" && (
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-200">
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Crop: {assessment.crop}
-                </span>
-                <h3 className="text-xl font-bold text-gray-800">
-                  {assessment.condition}
-                </h3>
-              </div>
-              {getSeverityBadge(assessment.severity)}
-            </div>
-
-            <div className="space-y-4 text-sm">
-              <div className="p-3 bg-white rounded-lg border border-gray-200">
-                <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                  <span>Confidence Rating</span>
-                  <span className="font-semibold text-gray-700">{assessment.confidence}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-emerald-500 h-2 rounded-full"
-                    style={{ width: `${assessment.confidence}%` }}
-                  />
-                </div>
-                <p className="text-xs text-amber-700 mt-2">
-                  ⚠️ Preliminary heuristic assessment. Not a verified agronomic lab result.
+          {/* Right Column: Diagnostic Results & Treatment Card (7 cols) */}
+          <div className="lg:col-span-7 space-y-5">
+            {/* Initial Blank State */}
+            {!assessment && !isAnalyzing && (
+              <div className="agri-card p-8 text-center space-y-3">
+                <Leaf className="w-10 h-10 text-[#3E8E8A] mx-auto opacity-70" />
+                <h3 className="text-sm font-bold text-[#0F2E24]">Diagnostic Assessment Waiting</h3>
+                <p className="text-xs text-[#787266] max-w-sm mx-auto leading-relaxed">
+                  Upload a crop photograph on the left to initiate computer vision foliar analysis with automated diagnostic abstention.
                 </p>
               </div>
+            )}
 
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-1">Recommended Action</h4>
-                <p className="text-gray-700 leading-relaxed">{assessment.treatment}</p>
+            {/* Abstention Card */}
+            {assessment && assessment.status === "abstain" && (
+              <div className="agri-card p-6 border-l-4 border-l-[#E9A23B] space-y-4">
+                <div className="flex items-center gap-3 text-[#E9A23B]">
+                  <ShieldAlert className="w-6 h-6 shrink-0" />
+                  <h3 className="text-base font-bold text-[#0F2E24]">Diagnostic Abstention Triggered</h3>
+                </div>
+                <p className="text-xs sm:text-sm text-[#787266] leading-relaxed">
+                  {assessment.explanation}
+                </p>
+                <Callout variant="warning" title="Quality Assurance Rule">
+                  To prevent pesticide misapplication, our vision engine refuses to diagnose images that lack clear botanical foliage or distinct lesion patterns.
+                </Callout>
+                <button
+                  onClick={() => {
+                    setSelectedImage(null);
+                    setAssessment(null);
+                  }}
+                  className="inline-flex items-center gap-2 text-xs font-bold text-[#1C4A3A] hover:underline"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Upload another photograph</span>
+                </button>
               </div>
+            )}
 
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-1">Preventive Practices</h4>
-                <p className="text-gray-700 leading-relaxed">{assessment.prevention}</p>
-              </div>
+            {/* Diagnosed Results Card */}
+            {assessment && assessment.status === "diagnosed" && (
+              <div className="agri-card p-6 space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-[#E7E3D8]">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#787266]">
+                      Host Crop: {assessment.crop}
+                    </span>
+                    <h3 className="text-lg font-bold text-[#0F2E24] mt-0.5">
+                      {assessment.condition}
+                    </h3>
+                  </div>
+                  <Badge
+                    variant={
+                      assessment.severity === "high"
+                        ? "danger"
+                        : assessment.severity === "medium"
+                        ? "warning"
+                        : "success"
+                    }
+                  >
+                    {assessment.severity?.toUpperCase()} SEVERITY
+                  </Badge>
+                </div>
 
-              <div className="pt-3 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-500">
-                <span>Engine: {assessment.provenance.engine}</span>
-                <span className="text-gray-400 font-mono">{new Date(assessment.provenance.timestamp).toLocaleDateString()}</span>
-              </div>
-            </div>
+                {/* Confidence Bar */}
+                <div className="p-3.5 rounded-xl bg-[#FAF9F5] border border-[#E7E3D8]">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="text-[#787266] font-medium">Confidence Rating</span>
+                    <span className="font-mono font-bold text-[#0F2E24]">{assessment.confidence}%</span>
+                  </div>
+                  <div className="w-full bg-[#E7E3D8] rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-[#2F9E6B] h-2 rounded-full"
+                      style={{ width: `${assessment.confidence}%` }}
+                    />
+                  </div>
+                </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-emerald-700 text-sm">
-                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
-                <span>Inspection complete</span>
+                {/* Recommended Treatment Steps */}
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#787266] mb-1">
+                      Agronomic Treatment Plan
+                    </h4>
+                    <p className="text-xs sm:text-sm text-[#0F2E24] bg-[#FAF9F5] p-3 rounded-xl border border-[#E7E3D8] leading-relaxed">
+                      {assessment.treatment}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#787266] mb-1">
+                      Preventive Canopy Management
+                    </h4>
+                    <p className="text-xs sm:text-sm text-[#787266] leading-relaxed">
+                      {assessment.prevention}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Ask a KVK Expert CTA */}
+                <div className="p-4 rounded-xl bg-[#0F2E24] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-bold text-[#9BE564]">Need In-Person Verification?</div>
+                    <div className="text-[11px] text-emerald-100">
+                      Connect directly with your nearest Krishi Vigyan Kendra (KVK) Agronomist.
+                    </div>
+                  </div>
+                  <a
+                    href="tel:18001801551"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#9BE564] text-[#0F2E24] font-bold text-xs hover:bg-[#8BD853] transition-colors shrink-0"
+                  >
+                    <PhoneCall className="w-3.5 h-3.5" />
+                    <span>Call Kisan Helpline</span>
+                  </a>
+                </div>
               </div>
-              {persisting ? (
-                <span className="text-xs text-emerald-600 flex items-center gap-1">
-                  <Loader className="w-3.5 h-3.5 animate-spin" /> Saving record...
-                </span>
-              ) : persistedId ? (
-                <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-mono font-medium">
-                  Persisted to History
-                </span>
-              ) : null}
-            </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
       )}
     </div>
   );
