@@ -5,8 +5,10 @@ interface FeatureCardProps {
   icon: LucideIcon;
   title: string;
   description: string;
-  onClick: () => void;
+  onClick?: () => void;
   disabled?: boolean;
+  badge?: string;
+  badgeColor?: "green" | "blue" | "amber" | "purple";
 }
 
 export const FeatureCard: React.FC<FeatureCardProps> = ({ 
@@ -14,7 +16,9 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
   title, 
   description, 
   onClick, 
-  disabled = false 
+  disabled = false,
+  badge,
+  badgeColor = "green"
 }) => {
   return (
     <button
@@ -31,7 +35,19 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
           <Icon className="w-6 h-6 text-green-600" />
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-800 text-lg mb-2">{title}</h3>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h3 className="font-semibold text-gray-800 text-lg">{title}</h3>
+            {badge && (
+              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                badgeColor === "green" ? "bg-emerald-100 text-emerald-800 border border-emerald-300" :
+                badgeColor === "blue" ? "bg-blue-100 text-blue-800 border border-blue-300" :
+                badgeColor === "purple" ? "bg-purple-100 text-purple-800 border border-purple-300" :
+                "bg-amber-100 text-amber-800 border border-amber-300"
+              }`}>
+                {badge}
+              </span>
+            )}
+          </div>
           <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
         </div>
       </div>

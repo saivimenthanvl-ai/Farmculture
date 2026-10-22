@@ -42,23 +42,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // start with a local/fallback
       let friendly = deriveFriendly(u);
 
-      // OPTIONAL: try Firestore to pick the exact “friendly” you saved
-      // You saved with the doc id = friendly name earlier; that’s hard to look up by uid,
-      // so we’ll first try users/{uid}, then users/{friendly}
+      // Authoritative lookup strictly by authenticated UID (FC-08)
       try {
         const byUid = await getDoc(doc(db, "users", u.uid));
         if (byUid.exists()) {
-          const data = byUid.data() as any;
-          friendly = (data?.friendly ?? data?.displayName ?? friendly) || friendly;
-        } else if (friendly) {
-          const byFriendly = await getDoc(doc(db, "users", friendly));
-          if (byFriendly.exists()) {
-            const data = byFriendly.data() as any;
-            friendly = (data?.friendly ?? data?.displayName ?? friendly) || friendly;
-          }
+          const data = byUid.data() as { friendlyName?: string; displayName?: string };
+          friendly = data?.friendlyName ?? data?.displayName ?? friendly;
         }
       } catch {
-        // ignore Firestore errors; we still have a fallback
+        // Fallback to local derived name on offline or read errors
       }
 
       setFriendlyName(friendly ?? null);

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Thermometer, MapPin, Phone, Calendar, Package, AlertCircle } from 'lucide-react';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db } from '@/lib/firebase';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ColdStorageFacility {
@@ -98,13 +97,13 @@ export const ColdStorage: React.FC = () => {
     try {
       // In a real app, this would save to Firebase
       console.log('Booking submitted:', bookingForm);
-      alert('Booking request sent successfully! The facility will contact you within 24 hours.');
+      alert(t("cold.bookingSuccess"));
       setShowBookingForm(false);
       setBookingForm({});
       setSelectedFacility(null);
     } catch (error) {
       console.error('Error submitting booking:', error);
-      alert('Error submitting booking. Please try again.');
+      alert(t("cold.bookingError") || 'Error submitting booking. Please try again.');
     }
   };
 
@@ -167,36 +166,53 @@ export const ColdStorage: React.FC = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div className="text-center p-3 bg-white rounded-lg">
                       <Package className="w-6 h-6 text-blue-600 mx-auto mb-1" />
-                      <div className="text-sm font-medium text-gray-800">{facility.capacity} tons</div>
-                      <div className="text-xs text-gray-600">Total Capacity</div>
+                      <div className="text-sm font-medium text-gray-800">{facility.capacity} {t("cold.tons")}</div>
+                      <div className="text-xs text-gray-600">{t("cold.totalCapacity")}</div>
                     </div>
 
                     <div className="text-center p-3 bg-white rounded-lg">
                       <AlertCircle className="w-6 h-6 text-green-600 mx-auto mb-1" />
-                      <div className="text-sm font-medium text-gray-800">{facility.availableSpace} tons</div>
-                      <div className="text-xs text-gray-600">Available</div>
+                      <div className="text-sm font-medium text-gray-800">{facility.availableSpace} {t("cold.tons")}</div>
+                      <div className="text-xs text-gray-600">{t("cold.available")}</div>
                     </div>
 
                     <div className="text-center p-3 bg-white rounded-lg">
                       <Thermometer className="w-6 h-6 text-red-600 mx-auto mb-1" />
                       <div className="text-sm font-medium text-gray-800">{facility.temperature}</div>
-                      <div className="text-xs text-gray-600">Temperature</div>
+                      <div className="text-xs text-gray-600">{t("cold.temperature")}</div>
                     </div>
 
                     <div className="text-center p-3 bg-white rounded-lg">
                       <div className="text-lg font-bold text-yellow-600 mb-1">★{facility.rating}</div>
-                      <div className="text-xs text-gray-600">Rating</div>
+                      <div className="text-xs text-gray-600">{t("cold.rating")}</div>
                     </div>
                   </div>
 
                   <div className="mb-4">
                     <h4 className="text-xs font-medium text-gray-800 mb-2">{t("cold.facilities")}</h4>
                     <div className="flex flex-wrap gap-2">
-                      {facility.facilities.map((fac, index) => (
-                        <span key={index} className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
-                          {fac}
-                        </span>
-                      ))}
+                      {facility.facilities.map((fac, index) => {
+                        const facKeyMap: Record<string, string> = {
+                          "24/7 Monitoring": "cold.fac_monitoring",
+                          "Humidity Control": "cold.fac_humidity",
+                          "Loading Dock": "cold.fac_loading",
+                          "Security": "cold.fac_security",
+                          "Temperature Alerts": "cold.fac_tempAlerts",
+                          "Inventory Management": "cold.fac_inventory",
+                          "Quick Access": "cold.fac_quickAccess",
+                          "Insurance": "cold.fac_insurance",
+                          "Multi-Temperature Zones": "cold.fac_multiTemp",
+                          "Ripening Chambers": "cold.fac_ripening",
+                          "Packaging Service": "cold.fac_packaging",
+                          "Transport": "cold.fac_transport",
+                        };
+                        const localizedFac = facKeyMap[fac] ? t(facKeyMap[fac]) : fac;
+                        return (
+                          <span key={index} className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+                            {localizedFac}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -207,9 +223,9 @@ export const ColdStorage: React.FC = () => {
                           ✓ {t("cold.goodAvailability")}
                         </div>
                       ) : facility.availableSpace > 50 ? (
-                        <span className="text-yellow-500 font-medium">Limited Space</span>
+                        <span className="text-yellow-500 font-medium">{t("cold.limitedSpace")}</span>
                       ) : (
-                        <span className="text-red-500 font-medium">Almost Full</span>
+                        <span className="text-red-500 font-medium">{t("cold.almostFull")}</span>
                       )}
                     </div>
 
@@ -221,7 +237,7 @@ export const ColdStorage: React.FC = () => {
                       disabled={facility.availableSpace === 0}
                       className="btn-primary bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
                     >
-                      {facility.availableSpace === 0 ? 'Full' : t("cold.bookNow")}
+                      {facility.availableSpace === 0 ? t("cold.full") : t("cold.bookNow")}
                     </button>
                   </div>
                 </div>
@@ -239,20 +255,20 @@ export const ColdStorage: React.FC = () => {
               }}
               className="text-blue-600 hover:text-blue-700 font-medium mb-4"
             >
-              ← Back to Facilities
+              ← {t("cold.backToFacilities")}
             </button>
 
             <h3 className="text-xl font-semibold text-gray-800 mb-2">
-              Book Storage at {selectedFacility?.name}
+              {t("cold.bookStorageAt")} {selectedFacility?.name}
             </h3>
-            <p className="text-gray-600">Fill out the form below to reserve cold storage space</p>
+            <p className="text-gray-600">{t("cold.formSubtitle")}</p>
           </div>
 
           <form onSubmit={handleSubmitBooking} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Name
+                  {t("cold.yourName")}
                 </label>
                 <input
                   type="text"
@@ -265,7 +281,7 @@ export const ColdStorage: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
+                  {t("cold.phoneNumber")}
                 </label>
                 <input
                   type="tel"
@@ -279,12 +295,12 @@ export const ColdStorage: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Produce Type
+                {t("cold.produceType")}
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g., Tomatoes, Apples, Leafy Vegetables"
+                placeholder={t("cold.producePlaceholder")}
                 value={bookingForm.produce || ''}
                 onChange={(e) => setBookingForm({ ...bookingForm, produce: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -294,7 +310,7 @@ export const ColdStorage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quantity (kg)
+                  {t("cold.quantityKg")}
                 </label>
                 <input
                   type="number"
@@ -309,7 +325,7 @@ export const ColdStorage: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Duration (days)
+                  {t("cold.durationDays")}
                 </label>
                 <input
                   type="number"
@@ -323,7 +339,7 @@ export const ColdStorage: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Date
+                  {t("cold.startDate")}
                 </label>
                 <input
                   type="date"
@@ -338,15 +354,15 @@ export const ColdStorage: React.FC = () => {
 
             {bookingForm.quantity && bookingForm.duration && (
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <h4 className="font-medium text-blue-800 mb-2">Cost Estimate</h4>
+                <h4 className="font-medium text-blue-800 mb-2">{t("cold.costEstimate")}</h4>
                 <div className="text-blue-700">
-                  <p>Quantity: {bookingForm.quantity} kg</p>
-                  <p>Duration: {bookingForm.duration} days</p>
+                  <p>{t("cold.quantityKg")}: {bookingForm.quantity} kg</p>
+                  <p>{t("cold.durationDays")}: {bookingForm.duration} days</p>
                   <p>
-                    Rate: ₹{selectedFacility?.pricePerKg} {t("units.perKgDay")}
+                    {t("cold.rate")}: ₹{selectedFacility?.pricePerKg} {t("units.perKgDay")}
                   </p>
                   <p className="text-lg font-bold mt-2">
-                    Total Cost: ₹{calculateTotalCost().toLocaleString()}
+                    {t("cold.totalCost")}: ₹{calculateTotalCost().toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -357,7 +373,7 @@ export const ColdStorage: React.FC = () => {
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
             >
               <Calendar className="w-5 h-5" />
-              <span>Submit Booking Request</span>
+              <span>{t("cold.submitBookingRequest")}</span>
             </button>
           </form>
         </div>

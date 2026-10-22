@@ -121,7 +121,12 @@ export const SmartIrrigation: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             {/* i18n title + subtitle */}
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('irrigation.title')}</h2>
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-2xl font-bold text-gray-800">{t('irrigation.title')}</h2>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-100 text-cyan-800 border border-cyan-300">
+                Pump &amp; Soil Moisture Simulation
+              </span>
+            </div>
             <p className="text-gray-600">{t('irrigation.subtitle')}</p>
           </div>
           <div className="flex items-center space-x-3">

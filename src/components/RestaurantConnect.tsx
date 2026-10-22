@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Store, Phone, MapPin, Star, Clock, Truck } from "lucide-react";
-import { collection, getDocs, addDoc } from "firebase/firestore";
-import { db } from "../firebase/config";
+import { db } from '@/lib/firebase';
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Restaurant {
@@ -93,13 +92,13 @@ export const RestaurantConnect: React.FC = () => {
     try {
       // In a real app, this would save to Firebase
       console.log("Order submitted:", orderForm);
-      alert("Order request sent successfully! The restaurant will contact you within 24 hours.");
+      alert(t("restaurant.offerSuccess"));
       setShowOrderForm(false);
       setOrderForm({});
       setSelectedRestaurant(null);
     } catch (error) {
       console.error("Error submitting order:", error);
-      alert("Error submitting order. Please try again.");
+      alert(t("restaurant.offerError") || "Error submitting order. Please try again.");
     }
   };
 
@@ -158,7 +157,7 @@ export const RestaurantConnect: React.FC = () => {
 
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
                     <Clock className="w-4 h-4" />
-                    <span>Delivery: {restaurant.deliveryTime}</span>
+                    <span>{t("restaurant.delivery")} {restaurant.deliveryTime}</span>
                   </div>
                 </div>
 
@@ -204,20 +203,20 @@ export const RestaurantConnect: React.FC = () => {
               }}
               className="text-green-600 hover:text-green-700 font-medium mb-4"
             >
-              ← Back to Restaurants
+              ← {t("restaurant.backToRestaurants")}
             </button>
 
             <h3 className="text-xl font-semibold text-gray-800 mb-2">
-              Connect with {selectedRestaurant?.name}
+              {t("restaurant.connectWith")} {selectedRestaurant?.name}
             </h3>
-            <p className="text-gray-600">Fill out the form below to send your produce offer</p>
+            <p className="text-gray-600">{t("restaurant.formSubtitle")}</p>
           </div>
 
           <form onSubmit={handleSubmitOrder} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Name
+                  {t("restaurant.yourName")}
                 </label>
                 <input
                   type="text"
@@ -230,7 +229,7 @@ export const RestaurantConnect: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
+                  {t("restaurant.phoneNumber")}
                 </label>
                 <input
                   type="tel"
@@ -244,7 +243,7 @@ export const RestaurantConnect: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Produce Type
+                {t("restaurant.produceType")}
               </label>
               <select
                 required
@@ -252,7 +251,7 @@ export const RestaurantConnect: React.FC = () => {
                 onChange={(e) => setOrderForm({ ...orderForm, produce: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               >
-                <option value="">Select produce</option>
+                <option value="">{t("restaurant.selectProduce")}</option>
                 {selectedRestaurant?.requirements.map((req) => (
                   <option key={req} value={req}>
                     {req}
@@ -264,7 +263,7 @@ export const RestaurantConnect: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quantity (kg)
+                  {t("restaurant.quantityKg")}
                 </label>
                 <input
                   type="number"
@@ -280,7 +279,7 @@ export const RestaurantConnect: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Expected Price (€/kg)
+                  {t("restaurant.expectedPricePerKg")}
                 </label>
                 <input
                   type="number"
@@ -300,7 +299,7 @@ export const RestaurantConnect: React.FC = () => {
               className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
             >
               <Truck className="w-5 h-5" />
-              <span>Send Offer</span>
+              <span>{t("restaurant.sendOffer")}</span>
             </button>
           </form>
         </div>
