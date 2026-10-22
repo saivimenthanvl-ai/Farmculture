@@ -57,6 +57,7 @@ import {
 
 import { AppSidebar, MobileTabBar } from "./components/navigation/AppSidebar";
 import { CommandPalette } from "./components/ui/CommandPalette";
+import { OfflineBanner } from "./components/ui/OfflineBanner";
 
 /** Shared Layout with AppSidebar, Sticky Header, Command Palette, and MobileTabBar */
 function AppLayout() {
@@ -94,6 +95,9 @@ function AppLayout() {
           onToggleListening={() => setIsListening((v) => !v)}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
         />
+
+        {/* PWA Offline Network Banner */}
+        <OfflineBanner />
 
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto">
           <Outlet context={{ isListening, setIsListening }} />
