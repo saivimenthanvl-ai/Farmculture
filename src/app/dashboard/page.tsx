@@ -4,16 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLocalization } from "@/contexts/LocalizationContext";
 import { StatTile } from "@/components/ui/StatTile";
 import { Badge } from "@/components/ui/Badge";
-import { Callout } from "@/components/ui/Callout";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Tabs } from "@/components/ui/Tabs";
 import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
-import { Skeleton, CardSkeleton } from "@/components/ui/Skeleton";
 import {
   CloudSun,
   TrendingUp,
-  AlertTriangle,
   Camera,
   ArrowRight,
   Plus,
@@ -22,14 +19,10 @@ import {
   History,
   Layers,
   MapPin,
-  Calendar,
   Sparkles,
   Trash2,
-  CheckCircle2,
-  RefreshCw,
 } from "lucide-react";
 
-import { formatCurrencyAmount } from "@/lib/currencyService";
 import {
   FarmRecord,
   CropRecord,
@@ -46,7 +39,7 @@ import {
 
 export default function DashboardPage() {
   const { user, friendlyName } = useAuth();
-  const { t, interfaceLocale, displayCurrency } = useLocalization();
+  const { t } = useLocalization();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Tab state derived from URL ?tab=farms | crops | overview
@@ -82,7 +75,7 @@ export default function DashboardPage() {
     new Date().toISOString().slice(0, 10)
   );
 
-  const farmerName = friendlyName || user?.displayName || user?.email?.split("@")[0] || "Farmer";
+  const farmerName = friendlyName || user?.displayName || user?.email?.split("@")[0] || t("dashboard.welcomeBack");
 
   // Load real user records from Firestore
   const loadUserData = async () => {
@@ -106,7 +99,7 @@ export default function DashboardPage() {
       }
     } catch (err: any) {
       console.error("[Dashboard] Error fetching farm data:", err);
-      setError("Unable to load cloud farm records. Please check your internet connection.");
+      setError(t("dashboard.syncNotice"));
     } finally {
       setLoading(false);
     }
@@ -169,7 +162,7 @@ export default function DashboardPage() {
   // Handle Farm Deletion
   const handleDeleteFarm = async (farmId: string) => {
     if (!user?.uid) return;
-    if (window.confirm("Are you sure you want to remove this farm plot?")) {
+    if (window.confirm(t("dashboard.confirmDelete"))) {
       await deleteFarm(user.uid, farmId);
       await loadUserData();
     }
@@ -182,24 +175,24 @@ export default function DashboardPage() {
   const recentDiagnosticCount = assessments.length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header and Quick Actions */}
+    <div className="space-y-6 max-w-7xl mx-auto py-2">
+      {/* Header and Quick Actions — Aligned with Reference C */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7E3D8]">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold uppercase tracking-wider text-[#1C4A3A]">
-              Farmer Portal
+              {t("dashboard.portalBadge")}
             </span>
             <span className="text-[#A8A092]">·</span>
             <Badge variant="lime" dot>
-              {user ? "Cloud Synchronized" : "Guest Mode"}
+              {user ? t("dashboard.cloudSync") : t("dashboard.guestMode")}
             </Badge>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F2E24] tracking-tight font-display">
-            Welcome back, {farmerName}
+            {t("dashboard.welcomeBack")}, {farmerName}
           </h1>
-          <p className="text-xs sm:text-sm text-[#787266] mt-0.5">
-            Your centralized agricultural operational center. Real farm plots, crop health records, and mandi intelligence.
+          <p className="text-xs sm:text-sm text-[#787266] mt-0.5 max-w-2xl">
+            {t("dashboard.subtitle")}
           </p>
         </div>
 
@@ -210,7 +203,7 @@ export default function DashboardPage() {
             onClick={() => setIsFarmModalOpen(true)}
             icon={<Plus className="w-4 h-4" />}
           >
-            Add Farm Plot
+            {t("dashboard.addFarmPlot")}
           </Button>
           <Link to="/crop-diagnosis">
             <Button
@@ -218,7 +211,7 @@ export default function DashboardPage() {
               size="sm"
               icon={<Camera className="w-4 h-4" />}
             >
-              Scan Foliage
+              {t("dashboard.scanFoliage")}
             </Button>
           </Link>
         </div>
@@ -229,15 +222,15 @@ export default function DashboardPage() {
         activeTab={activeTab}
         onChange={setActiveTab}
         tabs={[
-          { id: "overview", label: "Farm Overview", icon: <Tractor className="w-3.5 h-3.5" /> },
-          { id: "farms", label: "Registered Farms", count: totalPlots, icon: <Layers className="w-3.5 h-3.5" /> },
-          { id: "crops", label: "Active Crop Records", count: activeCropCount, icon: <FileSpreadsheet className="w-3.5 h-3.5" /> },
+          { id: "overview", label: t("dashboard.tabOverview"), icon: <Tractor className="w-3.5 h-3.5" /> },
+          { id: "farms", label: t("dashboard.tabFarms"), count: totalPlots, icon: <Layers className="w-3.5 h-3.5" /> },
+          { id: "crops", label: t("dashboard.tabCrops"), count: activeCropCount, icon: <FileSpreadsheet className="w-3.5 h-3.5" /> },
         ]}
       />
 
       {error && (
         <ErrorState
-          title="Data Synchronization Notice"
+          title={t("dashboard.syncNotice")}
           message={error}
           onRetry={loadUserData}
         />
@@ -249,40 +242,40 @@ export default function DashboardPage() {
           {/* Top Row: Authentic User KPIs (No synthetic claims) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatTile
-              title="Registered Farms"
+              title={t("dashboard.kpiFarms")}
               value={loading ? "…" : totalPlots}
-              unit="Plots"
-              delta={totalPlots === 0 ? "No plots added" : "Active production"}
+              unit={t("dashboard.kpiFarmsUnit")}
+              delta={totalPlots === 0 ? t("dashboard.kpiFarmsEmpty") : t("dashboard.kpiFarmsActive")}
               deltaType="neutral"
               icon={Tractor}
-              subtitle="Owner authenticated"
+              subtitle={t("dashboard.kpiFarmsSub")}
             />
             <StatTile
-              title="Total Cultivated Land"
+              title={t("dashboard.kpiLand")}
               value={loading ? "…" : totalAcreage}
-              unit="Acres"
-              delta={totalAcreage > 0 ? "Under management" : "Awaiting farm entry"}
+              unit={t("dashboard.kpiLandUnit")}
+              delta={totalAcreage > 0 ? t("dashboard.kpiLandActive") : t("dashboard.kpiLandEmpty")}
               deltaType="neutral"
               icon={Layers}
-              subtitle="Registered area"
+              subtitle={t("dashboard.kpiLandSub")}
             />
             <StatTile
-              title="Active Crop Cycles"
+              title={t("dashboard.kpiCrops")}
               value={loading ? "…" : activeCropCount}
-              unit="Crops"
-              delta={activeCropCount > 0 ? "Field monitoring active" : "No crops tracked"}
+              unit={t("dashboard.kpiCropsUnit")}
+              delta={activeCropCount > 0 ? t("dashboard.kpiCropsActive") : t("dashboard.kpiCropsEmpty")}
               deltaType="neutral"
               icon={FileSpreadsheet}
-              subtitle="Seasonal plantings"
+              subtitle={t("dashboard.kpiCropsSub")}
             />
             <StatTile
-              title="Foliar Inspections"
+              title={t("dashboard.kpiScans")}
               value={loading ? "…" : recentDiagnosticCount}
-              unit="Scans"
-              delta={recentDiagnosticCount > 0 ? "Assessment log active" : "Zero diagnostic history"}
+              unit={t("dashboard.kpiScansUnit")}
+              delta={recentDiagnosticCount > 0 ? t("dashboard.kpiScansActive") : t("dashboard.kpiScansEmpty")}
               deltaType="neutral"
               icon={History}
-              subtitle="AI vision log"
+              subtitle={t("dashboard.kpiScansSub")}
             />
           </div>
 
@@ -290,10 +283,10 @@ export default function DashboardPage() {
           {!loading && totalPlots === 0 ? (
             <EmptyState
               icon={<Tractor className="w-8 h-8 text-[#1C4A3A]" />}
-              title="Welcome to Your Farm Hub! No Farms Registered Yet"
-              description="Register your first agricultural land plot to track cultivated acreage, monitor localized weather telemetry, and log crop health."
+              title={t("dashboard.emptyTitle")}
+              description={t("dashboard.emptyDesc")}
               action={{
-                label: "Register First Farm Plot",
+                label: t("dashboard.emptyAction"),
                 onClick: () => setIsFarmModalOpen(true),
                 icon: <Plus className="w-4 h-4" />,
               }}
@@ -305,8 +298,8 @@ export default function DashboardPage() {
               <div className="agri-card p-5 lg:col-span-2 space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-[#E7E3D8]">
                   <div>
-                    <h3 className="text-sm font-bold text-[#0F2E24]">Your Agricultural Land Holdings</h3>
-                    <p className="text-[11px] text-[#787266]">Authenticated cloud records</p>
+                    <h3 className="text-sm font-bold text-[#0F2E24]">{t("dashboard.holdingsTitle")}</h3>
+                    <p className="text-[11px] text-[#787266]">{t("dashboard.holdingsSub")}</p>
                   </div>
                   <Button
                     variant="ghost"
@@ -314,7 +307,7 @@ export default function DashboardPage() {
                     onClick={() => setIsFarmModalOpen(true)}
                     icon={<Plus className="w-3.5 h-3.5" />}
                   >
-                    Add Plot
+                    {t("dashboard.addPlot")}
                   </Button>
                 </div>
 
@@ -328,7 +321,7 @@ export default function DashboardPage() {
                         <div className="flex items-start justify-between">
                           <h4 className="text-xs font-bold text-[#0F2E24]">{f.name}</h4>
                           <span className="text-[10px] font-mono font-bold text-[#1C4A3A] bg-white px-2 py-0.5 rounded border border-[#E7E3D8]">
-                            {f.totalAcres} Acres
+                            {f.totalAcres} {t("dashboard.acres")}
                           </span>
                         </div>
                         <div className="flex items-center gap-1 text-[11px] text-[#787266] mt-1">
@@ -348,10 +341,10 @@ export default function DashboardPage() {
                         <span className="text-[#A8A092]">ID: {f.id.slice(0, 8)}</span>
                         <button
                           onClick={() => handleDeleteFarm(f.id)}
-                          className="text-[#C8553D] hover:underline flex items-center gap-1"
+                          className="text-[#C8553D] hover:underline flex items-center gap-1 font-semibold"
                         >
                           <Trash2 className="w-3 h-3" />
-                          <span>Remove</span>
+                          <span>{t("dashboard.remove")}</span>
                         </button>
                       </div>
                     </div>
@@ -364,18 +357,18 @@ export default function DashboardPage() {
                 <div>
                   <div className="flex items-center justify-between pb-2 border-b border-[#E7E3D8]">
                     <div>
-                      <h3 className="text-sm font-bold text-[#0F2E24]">Recent Diagnostics</h3>
-                      <p className="text-[11px] text-[#787266]">Saved plant health logs</p>
+                      <h3 className="text-sm font-bold text-[#0F2E24]">{t("dashboard.recentDiagnostics")}</h3>
+                      <p className="text-[11px] text-[#787266]">{t("dashboard.recentDiagnosticsSub")}</p>
                     </div>
                     <Link to="/crop-diagnosis" className="text-xs font-bold text-[#1C4A3A] hover:underline">
-                      New Scan
+                      {t("dashboard.newScan")}
                     </Link>
                   </div>
 
                   {assessments.length === 0 ? (
                     <div className="py-8 text-center text-xs text-[#787266]">
                       <Camera className="w-6 h-6 text-[#A8A092] mx-auto mb-2 opacity-60" />
-                      <span>No plant inspections logged yet.</span>
+                      <span>{t("dashboard.noDiagnostics")}</span>
                     </div>
                   ) : (
                     <div className="space-y-2.5 mt-3">
@@ -392,10 +385,14 @@ export default function DashboardPage() {
                                   ? "danger"
                                   : a.severity === "medium"
                                   ? "warning"
-                                  : "success"
+                                  : "lime"
                               }
                             >
-                              {a.severity?.toUpperCase()} RISK
+                              {a.severity === "low"
+                                ? t("dashboard.healthy")
+                                : a.condition?.includes("Inconclusive")
+                                ? t("dashboard.inconclusive")
+                                : t("dashboard.diseaseDetected")}
                             </Badge>
                           </div>
                           <p className="text-[#787266] truncate">{a.condition}</p>
@@ -412,7 +409,7 @@ export default function DashboardPage() {
                   to="/crop-diagnosis?tab=history"
                   className="mt-4 pt-3 border-t border-[#E7E3D8] flex items-center justify-between text-xs font-bold text-[#1C4A3A] hover:text-[#0F2E24]"
                 >
-                  <span>View Complete History ({assessments.length})</span>
+                  <span>{t("navigation.history")} ({assessments.length})</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -421,39 +418,39 @@ export default function DashboardPage() {
 
           {/* Quick Production Tools Strip */}
           <div className="agri-card p-5">
-            <h3 className="text-sm font-bold text-[#0F2E24] mb-3">Quick Agronomic Actions</h3>
+            <h3 className="text-sm font-bold text-[#0F2E24] mb-3">{t("navigation.mainTools")}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Link
                 to="/market-prices"
                 className="p-3.5 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] hover:bg-white hover:border-[#9BE564] transition-all text-left group"
               >
                 <TrendingUp className="w-5 h-5 text-[#1C4A3A] group-hover:text-[#2F9E6B] mb-2" />
-                <div className="text-xs font-bold text-[#0F2E24]">Mandi Prices</div>
-                <div className="text-[10px] text-[#787266]">Official Agmarknet rates</div>
+                <div className="text-xs font-bold text-[#0F2E24]">{t("market_prices")}</div>
+                <div className="text-[10px] text-[#787266]">{t("dashboard.mandiSub")}</div>
               </Link>
               <Link
                 to="/weather"
                 className="p-3.5 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] hover:bg-white hover:border-[#9BE564] transition-all text-left group"
               >
                 <CloudSun className="w-5 h-5 text-[#3E8E8A] mb-2" />
-                <div className="text-xs font-bold text-[#0F2E24]">Weather Telemetry</div>
-                <div className="text-[10px] text-[#787266]">Spray windows &amp; rain</div>
+                <div className="text-xs font-bold text-[#0F2E24]">{t("weather_insights")}</div>
+                <div className="text-[10px] text-[#787266]">{t("dashboard.weatherSub")}</div>
               </Link>
               <Link
                 to="/schemes"
                 className="p-3.5 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] hover:bg-white hover:border-[#9BE564] transition-all text-left group"
               >
                 <Sparkles className="w-5 h-5 text-[#E9A23B] mb-2" />
-                <div className="text-xs font-bold text-[#0F2E24]">Government Schemes</div>
-                <div className="text-[10px] text-[#787266]">Verified subsidy portals</div>
+                <div className="text-xs font-bold text-[#0F2E24]">{t("govt_schemes")}</div>
+                <div className="text-[10px] text-[#787266]">{t("footerNav.evidenceSupport")}</div>
               </Link>
               <button
                 onClick={() => setIsCropModalOpen(true)}
                 className="p-3.5 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] hover:bg-white hover:border-[#9BE564] transition-all text-left group"
               >
                 <FileSpreadsheet className="w-5 h-5 text-[#2F9E6B] mb-2" />
-                <div className="text-xs font-bold text-[#0F2E24]">Log Crop Cycle</div>
-                <div className="text-[10px] text-[#787266]">Track planting to harvest</div>
+                <div className="text-xs font-bold text-[#0F2E24]">{t("dashboard.addCropRecord")}</div>
+                <div className="text-[10px] text-[#787266]">{t("dashboard.kpiCropsSub")}</div>
               </button>
             </div>
           </div>
@@ -465,8 +462,8 @@ export default function DashboardPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-[#E7E3D8]">
             <div>
-              <h2 className="text-base font-bold text-[#0F2E24]">Agricultural Holdings &amp; Plots</h2>
-              <p className="text-xs text-[#787266]">Owner-partitioned land records stored in Firestore</p>
+              <h2 className="text-base font-bold text-[#0F2E24]">{t("dashboard.registeredPlotsTitle")}</h2>
+              <p className="text-xs text-[#787266]">{t("dashboard.registeredPlotsSub")}</p>
             </div>
             <Button
               variant="accent"
@@ -474,17 +471,17 @@ export default function DashboardPage() {
               onClick={() => setIsFarmModalOpen(true)}
               icon={<Plus className="w-4 h-4" />}
             >
-              Add Plot
+              {t("dashboard.addPlot")}
             </Button>
           </div>
 
           {farms.length === 0 ? (
             <EmptyState
               icon={<Tractor className="w-8 h-8 text-[#1C4A3A]" />}
-              title="No Farms Registered"
-              description="You have not created any farm plots yet. Add your land coordinates and crop history."
+              title={t("dashboard.emptyTitle")}
+              description={t("dashboard.emptyDesc")}
               action={{
-                label: "Add Farm Plot",
+                label: t("dashboard.emptyAction"),
                 onClick: () => setIsFarmModalOpen(true),
                 icon: <Plus className="w-4 h-4" />,
               }}
@@ -497,7 +494,7 @@ export default function DashboardPage() {
                     <div className="flex items-start justify-between">
                       <h3 className="text-sm font-bold text-[#0F2E24]">{farm.name}</h3>
                       <span className="text-xs font-mono font-bold text-[#1C4A3A] bg-[#FAF9F5] px-2 py-0.5 rounded border border-[#E7E3D8]">
-                        {farm.totalAcres} Acres
+                        {farm.totalAcres} {t("dashboard.acres")}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-[#787266] mt-1">
@@ -519,13 +516,13 @@ export default function DashboardPage() {
 
                   <div className="pt-3 border-t border-[#E7E3D8] flex items-center justify-between text-xs">
                     <span className="text-[#A8A092] font-mono text-[10px]">
-                      Created {new Date(farm.createdAt).toLocaleDateString()}
+                      ID: {farm.id.slice(0, 8)}
                     </span>
                     <button
                       onClick={() => handleDeleteFarm(farm.id)}
                       className="text-[#C8553D] hover:underline font-bold text-xs"
                     >
-                      Delete Plot
+                      {t("dashboard.remove")}
                     </button>
                   </div>
                 </div>
@@ -540,8 +537,8 @@ export default function DashboardPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-[#E7E3D8]">
             <div>
-              <h2 className="text-base font-bold text-[#0F2E24]">Active Field Crop Cycles</h2>
-              <p className="text-xs text-[#787266]">Sowing dates, stage tracking, and harvest expectations</p>
+              <h2 className="text-base font-bold text-[#0F2E24]">{t("dashboard.activeCropsTitle")}</h2>
+              <p className="text-xs text-[#787266]">{t("dashboard.activeCropsSub")}</p>
             </div>
             <Button
               variant="accent"
@@ -549,17 +546,17 @@ export default function DashboardPage() {
               onClick={() => setIsCropModalOpen(true)}
               icon={<Plus className="w-4 h-4" />}
             >
-              Log New Crop
+              {t("dashboard.addCropRecord")}
             </Button>
           </div>
 
           {crops.length === 0 ? (
             <EmptyState
               icon={<FileSpreadsheet className="w-8 h-8 text-[#1C4A3A]" />}
-              title="No Active Crop Cycles Logged"
-              description="Record your seed variety, sowing date, and field acreage to track crop progress."
+              title={t("dashboard.noCropsYet")}
+              description={t("dashboard.noCropsDesc")}
               action={{
-                label: "Log Crop Record",
+                label: t("dashboard.addCropRecord"),
                 onClick: () => setIsCropModalOpen(true),
                 icon: <Plus className="w-4 h-4" />,
               }}
@@ -570,11 +567,11 @@ export default function DashboardPage() {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#FAF9F5] border-b border-[#E7E3D8] text-[11px] uppercase font-bold text-[#787266]">
                     <tr>
-                      <th className="p-3.5">Crop Name</th>
-                      <th className="p-3.5">Area (Acres)</th>
-                      <th className="p-3.5">Sowing Date</th>
-                      <th className="p-3.5">Growth Stage</th>
-                      <th className="p-3.5">Record Timestamp</th>
+                      <th className="p-3.5">{t("dashboard.colCrop")}</th>
+                      <th className="p-3.5">{t("dashboard.colArea")} ({t("dashboard.acres")})</th>
+                      <th className="p-3.5">{t("dashboard.colPlantDate")}</th>
+                      <th className="p-3.5">{t("dashboard.colStage")}</th>
+                      <th className="p-3.5">{t("dashboard.colPlot")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#F3F1E9]">
@@ -589,7 +586,7 @@ export default function DashboardPage() {
                           </Badge>
                         </td>
                         <td className="p-3.5 text-[#A8A092] font-mono text-[10px]">
-                          {new Date(c.createdAt).toLocaleDateString()}
+                          {c.farmId ? `Plot #${c.farmId.slice(0, 6)}` : "General"}
                         </td>
                       </tr>
                     ))}
@@ -605,8 +602,8 @@ export default function DashboardPage() {
       <Dialog
         isOpen={isFarmModalOpen}
         onClose={() => setIsFarmModalOpen(false)}
-        title="Register Farm Plot"
-        description="Add a new agricultural parcel to track crops, soil health, and weather."
+        title={t("dashboard.registerFarmModalTitle")}
+        description={t("dashboard.registeredPlotsSub")}
         footer={
           <>
             <Button
@@ -615,7 +612,7 @@ export default function DashboardPage() {
               onClick={() => setIsFarmModalOpen(false)}
               disabled={submitting}
             >
-              Cancel
+              {t("dashboard.cancel")}
             </Button>
             <Button
               variant="primary"
@@ -623,14 +620,14 @@ export default function DashboardPage() {
               onClick={handleCreateFarm}
               loading={submitting}
             >
-              Save Plot
+              {t("dashboard.savePlot")}
             </Button>
           </>
         }
       >
         <form onSubmit={handleCreateFarm} className="space-y-3.5">
           <div>
-            <label className="agri-label block mb-1">Farm / Plot Name</label>
+            <label className="agri-label block mb-1">{t("dashboard.farmNameLabel")}</label>
             <input
               type="text"
               required
@@ -643,22 +640,22 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="agri-label block mb-1">Taluka / Village</label>
+              <label className="agri-label block mb-1">{t("dashboard.farmLocationLabel")}</label>
               <input
                 type="text"
                 value={farmLocation}
                 onChange={(e) => setFarmLocation(e.target.value)}
-                placeholder="e.g. Niphad, Nashik"
+                placeholder="e.g. Madurai, Coimbatore"
                 className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
               />
             </div>
             <div>
-              <label className="agri-label block mb-1">State / Province</label>
+              <label className="agri-label block mb-1">{t("dashboard.farmStateLabel")}</label>
               <input
                 type="text"
                 value={farmState}
                 onChange={(e) => setFarmState(e.target.value)}
-                placeholder="e.g. Maharashtra"
+                placeholder="e.g. Tamil Nadu"
                 className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
               />
             </div>
@@ -666,7 +663,7 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="agri-label block mb-1">Total Acreage</label>
+              <label className="agri-label block mb-1">{t("dashboard.totalAcresLabel")}</label>
               <input
                 type="number"
                 min="0.5"
@@ -677,12 +674,12 @@ export default function DashboardPage() {
               />
             </div>
             <div>
-              <label className="agri-label block mb-1">Primary Crops</label>
+              <label className="agri-label block mb-1">{t("dashboard.primaryCropsLabel")}</label>
               <input
                 type="text"
                 value={farmCrops}
                 onChange={(e) => setFarmCrops(e.target.value)}
-                placeholder="e.g. Tomato, Onion, Wheat"
+                placeholder="e.g. Paddy, Tomato, Banana"
                 className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
               />
             </div>
@@ -694,8 +691,8 @@ export default function DashboardPage() {
       <Dialog
         isOpen={isCropModalOpen}
         onClose={() => setIsCropModalOpen(false)}
-        title="Log Active Crop Cycle"
-        description="Record current plantings to track germination, flowering, and harvest."
+        title={t("dashboard.logCropModalTitle")}
+        description={t("dashboard.activeCropsSub")}
         footer={
           <>
             <Button
@@ -704,7 +701,7 @@ export default function DashboardPage() {
               onClick={() => setIsCropModalOpen(false)}
               disabled={submitting}
             >
-              Cancel
+              {t("dashboard.cancel")}
             </Button>
             <Button
               variant="primary"
@@ -712,7 +709,7 @@ export default function DashboardPage() {
               onClick={handleCreateCrop}
               loading={submitting}
             >
-              Log Crop
+              {t("dashboard.saveCrop")}
             </Button>
           </>
         }
@@ -720,7 +717,7 @@ export default function DashboardPage() {
         <form onSubmit={handleCreateCrop} className="space-y-3.5">
           {farms.length > 0 && (
             <div>
-              <label className="agri-label block mb-1">Select Farm Plot</label>
+              <label className="agri-label block mb-1">{t("dashboard.selectFarmLabel")}</label>
               <select
                 value={selectedFarmId}
                 onChange={(e) => setSelectedFarmId(e.target.value)}
@@ -728,7 +725,7 @@ export default function DashboardPage() {
               >
                 {farms.map((f) => (
                   <option key={f.id} value={f.id}>
-                    {f.name} ({f.totalAcres} Acres)
+                    {f.name} ({f.totalAcres} {t("dashboard.acres")})
                   </option>
                 ))}
               </select>
@@ -736,20 +733,20 @@ export default function DashboardPage() {
           )}
 
           <div>
-            <label className="agri-label block mb-1">Crop Name &amp; Variety</label>
+            <label className="agri-label block mb-1">{t("dashboard.cropVarietyLabel")}</label>
             <input
               type="text"
               required
               value={cropName}
               onChange={(e) => setCropName(e.target.value)}
-              placeholder="e.g. Tomato (Hybrid Abhinav)"
+              placeholder="e.g. Tomato (Co-3), Paddy (Ponni)"
               className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="agri-label block mb-1">Planted Area (Acres)</label>
+              <label className="agri-label block mb-1">{t("dashboard.plantedAcreageLabel")}</label>
               <input
                 type="number"
                 min="0.25"
@@ -760,7 +757,7 @@ export default function DashboardPage() {
               />
             </div>
             <div>
-              <label className="agri-label block mb-1">Sowing Date</label>
+              <label className="agri-label block mb-1">{t("dashboard.plantingDateLabel")}</label>
               <input
                 type="date"
                 value={cropPlantingDate}

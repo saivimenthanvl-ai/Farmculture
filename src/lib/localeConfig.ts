@@ -25,6 +25,25 @@ export type SupportedLocale =
   | 'ar-JO'
   | 'ar-AE';
 
+export const SUPPORTED_LOCALES: SupportedLocale[] = [
+  'en-IN',
+  'en-US',
+  'en-GB',
+  'en-AU',
+  'ta-IN',
+  'hi-IN',
+  'mr-IN',
+  'te-IN',
+  'de-DE',
+  'fr-FR',
+  'es-ES',
+  'pl-PL',
+  'ar-KW',
+  'ar-BH',
+  'ar-JO',
+  'ar-AE',
+];
+
 export type SupportedRegion =
   | 'IN'
   | 'US'
