@@ -395,12 +395,12 @@ export const MobileTabBar: React.FC = () => {
           <Link
             key={tab.path}
             to={tab.path}
-            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-[10px] font-bold transition-colors ${
+            className={`flex flex-col items-center justify-center min-h-[44px] min-w-[44px] px-2 rounded-lg text-[10px] font-bold transition-colors select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9BE564] ${
               isActive ? "text-[#9BE564]" : "text-emerald-200/70 hover:text-white"
             }`}
           >
             <Icon className="w-5 h-5 shrink-0" />
-            <span className="truncate max-w-[64px]">{t(tab.labelKey) || tab.defaultLabel}</span>
+            <span className="truncate max-w-[64px] mt-0.5">{t(tab.labelKey) || tab.defaultLabel}</span>
           </Link>
         );
       })}

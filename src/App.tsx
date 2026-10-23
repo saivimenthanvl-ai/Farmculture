@@ -59,6 +59,7 @@ import {
 import { AppSidebar, MobileTabBar } from "./components/navigation/AppSidebar";
 import { CommandPalette } from "./components/ui/CommandPalette";
 import { OfflineBanner } from "./components/ui/OfflineBanner";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
 import SEOHead from "./components/SEOHead";
 
 /** Shared Layout with AppSidebar, Sticky Header, Command Palette, and MobileTabBar */
@@ -90,6 +91,14 @@ function AppLayout() {
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
+      {/* Skip to Main Content Link for Keyboard Accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#0F2E24] focus:text-white focus:rounded-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#9BE564] text-xs font-bold"
+      >
+        Skip to main agricultural workspace
+      </a>
+
       {/* Main Workspace Body: Scrolls independently while sidebar stays pinned */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto pb-16 md:pb-0 [scrollbar-width:thin] [scrollbar-color:#D3CDC0_transparent]">
         <Header
@@ -101,8 +110,10 @@ function AppLayout() {
         {/* PWA Offline Network Banner */}
         <OfflineBanner />
 
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto">
-          <Outlet context={{ isListening, setIsListening }} />
+        <main id="main-content" role="main" className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto focus:outline-none">
+          <ErrorBoundary>
+            <Outlet context={{ isListening, setIsListening }} />
+          </ErrorBoundary>
         </main>
 
         <Footer />
