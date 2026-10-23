@@ -212,16 +212,26 @@ export const PrivacyPolicyPage: React.FC = () => {
             <p className="text-xs sm:text-sm text-[#787266] leading-relaxed">
               Regardless of your jurisdiction (under India's DPDP Act 2023, EU/UK GDPR, California CCPA, or Australia's Privacy Act 1988), you have verifiable rights regarding your personal information:
             </p>
-            <ul className="list-disc list-inside space-y-1.5 text-xs sm:text-sm text-[#787266] pl-2">
+            <ul className="list-disc list-inside space-y-2 text-xs sm:text-sm text-[#787266] pl-2">
               <li>
-                <strong>Access &amp; Export:</strong> Inspect your profile and export your historical foliar diagnosis records.
+                <strong>Access &amp; Export:</strong> Inspect your profile, view registered land plots, and review your historical foliar diagnosis records at any time.
               </li>
               <li>
-                <strong>Account &amp; Data Erasure:</strong> To delete your account, saved images, and historical logs, submit a ticket via our{" "}
+                <strong>Self-Service Account &amp; Data Erasure:</strong> Authenticated users can permanently delete their account directly within{" "}
+                <Link to="/profile" className="text-[#1C4A3A] font-bold hover:underline">
+                  Account Settings (Danger Zone)
+                </Link>
+                . Initiating deletion triggers immediate, irreversible removal of your Firebase Authentication identity, user profile, registered farm plots, crop records, foliar disease inspection history, uploaded leaf photographs from cloud storage, and public review attributions.
+              </li>
+              <li>
+                <strong>Lawful Retention Exceptions:</strong> In compliance with applicable statutory regulations, immutable audit logs of support inquiries and disaster-recovery backup snapshots are retained according to documented retention schedules (up to 180 days for audit records; rolling 30–60 days for encrypted disaster recovery snapshots). Once these retention windows expire, records are permanently expunged.
+              </li>
+              <li>
+                <strong>Incomplete Deletion Inquiries:</strong> If you believe any personal identifier remains after executing account deletion, you may file an audit request through our{" "}
                 <Link to="/contact" className="text-[#1C4A3A] font-bold hover:underline">
-                  Contact &amp; Support Portal
-                </Link>{" "}
-                selecting the <em>"Account Deletion Request"</em> category. Deletion requests are processed across Firebase Authentication, Firestore, and Storage upon ownership verification.
+                  Support &amp; Privacy Desk
+                </Link>
+                .
               </li>
             </ul>
           </section>

@@ -28,6 +28,7 @@ import ServicesPage from "./pages/ServicesPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import DisclaimerPage from "./pages/DisclaimerPage";
 import ContactUsPage from "./pages/ContactUsPage";
+import AccountSettingsPage from "./pages/account/AccountSettingsPage";
 
 // Providers
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
@@ -356,6 +357,8 @@ export default function App() {
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/profile" element={<AccountSettingsPage />} />
+                <Route path="/settings/account" element={<AccountSettingsPage />} />
               </Route>
 
               {/* 404 Catch-All */}

@@ -146,7 +146,7 @@ export default function Header({ isListening, onToggleListening, onOpenMobileMen
                 </div>
 
                 <Link
-                  to="/dashboard"
+                  to="/profile"
                   className="flex items-center gap-2 w-full px-3.5 py-2 hover:bg-[#EDF4F0] text-[#0F2E24] font-medium transition-colors"
                   role="menuitem"
                   onClick={() => setMenuOpen(false)}

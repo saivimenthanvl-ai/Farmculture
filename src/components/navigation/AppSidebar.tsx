@@ -287,7 +287,7 @@ export const AppSidebar: React.FC<{
               </div>
             )}
             <Link
-              to="/dashboard"
+              to="/profile"
               onClick={onCloseMobile}
               className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-emerald-100/90 hover:bg-[#1C4A3A] hover:text-white"
             >
