@@ -223,8 +223,8 @@ export const AppSidebar: React.FC<{
         </button>
       </div>
 
-      {/* Navigation Sections */}
-      <nav className="flex-1 py-3 px-2 space-y-4 overflow-y-auto">
+      {/* Navigation Sections with custom slim scrollbar */}
+      <nav className="flex-1 py-3 px-2 space-y-4 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#1C4A3A_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#1C4A3A] [&::-webkit-scrollbar-thumb]:rounded-full">
         {NAV_CATEGORIES.map((category) => (
           <div key={category.categoryKey} className="space-y-1">
             {!collapsed && (
@@ -266,7 +266,13 @@ export const AppSidebar: React.FC<{
                     <div className="flex-1 flex items-center justify-between min-w-0">
                       <span className="truncate">{t(item.labelKey) || item.defaultLabel}</span>
                       {item.isExperimental && (
-                        <span className="text-[9px] font-mono text-emerald-300/80 group-hover:text-emerald-200">
+                        <span
+                          className={`text-[9px] font-mono px-1 rounded ${
+                            isActive
+                              ? "bg-[#0F2E24]/15 text-[#0F2E24] font-semibold"
+                              : "text-emerald-300/90 group-hover:text-emerald-200"
+                          }`}
+                        >
                           preview
                         </span>
                       )}

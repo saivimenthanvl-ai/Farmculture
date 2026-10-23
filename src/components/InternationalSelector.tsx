@@ -41,18 +41,19 @@ export const InternationalSelector: React.FC = () => {
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* Trigger Button: Shows flag + currency + locale code */}
+      {/* Trigger Button: Clean balanced flag + locale + currency with design tokens */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-2 px-3 py-2 bg-white/95 text-gray-800 rounded-lg border border-gray-200 shadow-sm hover:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs font-semibold transition-all"
-        title="Change Language, Country or Display Currency"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white text-[#0F2E24] rounded-lg border border-[#E7E3D8] hover:border-[#1C4A3A] shadow-2xs hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3E8E8A] text-xs font-semibold transition-all"
+        title="Change Language, Region or Currency"
         aria-label="Localization settings"
+        aria-expanded={isOpen}
       >
-        <span className="text-base leading-none">{currentRegion?.flag || "🌐"}</span>
-        <span className="uppercase text-gray-700">{interfaceLocale}</span>
-        <span className="text-gray-400">•</span>
-        <span className="text-emerald-700 font-bold">{displayCurrency}</span>
-        <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+        <span className="text-sm leading-none shrink-0" aria-hidden="true">{currentRegion?.flag || "🌐"}</span>
+        <span className="uppercase text-[#3B3832] font-mono text-[11px]">{interfaceLocale.split("-")[0]}</span>
+        <span className="text-[#D3CDC0] text-[10px]">•</span>
+        <span className="text-[#1C4A3A] font-bold text-[11px] font-mono">{displayCurrency}</span>
+        <ChevronDown className="w-3.5 h-3.5 text-[#787266] shrink-0" />
       </button>
 
       {/* Selector Dropdown Modal */}

@@ -90,8 +90,8 @@ function AppLayout() {
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      {/* Main Workspace Body */}
-      <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+      {/* Main Workspace Body: Scrolls independently while sidebar stays pinned */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto pb-16 md:pb-0 [scrollbar-width:thin] [scrollbar-color:#D3CDC0_transparent]">
         <Header
           isListening={isListening}
           onToggleListening={() => setIsListening((v) => !v)}

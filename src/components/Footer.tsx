@@ -7,22 +7,22 @@ export const Footer: React.FC = () => {
   const { t } = useLanguage();
 
   return (
-    <footer className="mt-16 bg-[#0f172a] text-gray-300 border-t border-emerald-500/20">
-      {/* Accent decorative bar */}
-      <div className="h-1 w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-green-600" />
+    <footer className="mt-16 bg-[#0F2E24] text-[#D4CEBF] border-t border-[#1C4A3A]">
+      {/* Subtle brand hairline accent */}
+      <div className="h-0.5 w-full bg-gradient-to-r from-[#1C4A3A] via-[#9BE564] to-[#1C4A3A]" />
 
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand Column */}
           <div className="space-y-4 md:col-span-1">
             <div className="flex items-center gap-2 text-white">
-              <Wheat className="w-6 h-6 text-emerald-400" />
-              <span className="text-xl font-bold tracking-tight">Farmculture AI</span>
+              <Wheat className="w-6 h-6 text-[#9BE564]" />
+              <span className="text-xl font-bold tracking-tight font-display text-white">Farmculture AI</span>
             </div>
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="text-xs text-[#A8A092] leading-relaxed">
               {t("footerNav.brandSummary")}
             </p>
-            <div className="flex items-center gap-2 text-[11px] text-emerald-400 font-medium">
+            <div className="flex items-center gap-2 text-[11px] text-[#9BE564] font-medium">
               <ShieldCheck className="w-4 h-4" />
               <span>{t("footerNav.evidenceSupport")}</span>
             </div>
