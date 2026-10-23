@@ -12,6 +12,7 @@ import {
 import { useLocalization } from "@/contexts/LocalizationContext";
 import { Badge } from "@/components/ui/Badge";
 import { Callout } from "@/components/ui/Callout";
+import SEOHead from "@/components/SEOHead";
 
 export const DisclaimerPage: React.FC = () => {
   const { t } = useLocalization();
@@ -34,6 +35,11 @@ export const DisclaimerPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      <SEOHead
+        title="Agronomic Disclaimer & Decision Support Boundaries"
+        description="Official advisory boundaries: AI foliar diagnostic limits, APMC modal price reference policies, and Open-Meteo telemetry disclaimers."
+        canonicalPath="/disclaimer"
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7E3D8]">
         <div>

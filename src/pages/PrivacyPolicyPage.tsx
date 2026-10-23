@@ -17,6 +17,7 @@ import {
 import { useLocalization } from "@/contexts/LocalizationContext";
 import { Badge } from "@/components/ui/Badge";
 import { Callout } from "@/components/ui/Callout";
+import SEOHead from "@/components/SEOHead";
 
 export const PrivacyPolicyPage: React.FC = () => {
   const { t } = useLocalization();
@@ -41,6 +42,11 @@ export const PrivacyPolicyPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      <SEOHead
+        title="Privacy Policy & Data Protection Principles"
+        description="Farmculture AI data governance, lawful basis, user consent, Firebase infrastructure security, and permanent account erasure workflow."
+        canonicalPath="/privacy-policy"
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7E3D8]">
         <div>

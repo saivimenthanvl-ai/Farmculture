@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, AlertTriangle, CheckCircle, TrendingUp, Camera, Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Activity, AlertTriangle, CheckCircle, TrendingUp, Calendar, Zap, Info, ShieldAlert, Sparkles } from 'lucide-react';
 import { useLocalization } from '../contexts/LocalizationContext';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
 
 interface CropHealth {
   fieldId: string;
-  fieldName: string;
-  cropType: string;
+  fieldNameKey: string;
+  cropTypeKey: string;
   healthScore: number;
   issues: Array<{
     type: 'disease' | 'pest' | 'nutrient' | 'water';
     severity: 'low' | 'medium' | 'high';
-    description: string;
-    recommendation: string;
+    descriptionKey: string;
+    recommendationKey: string;
     confidence: number;
   }>;
-  growthStage: string;
+  growthStageKey: string;
   expectedHarvest: string;
   yieldPrediction: number;
-  lastScanned: string;
+  lastScannedTime: string;
 }
 
 export const CropHealthMonitor: React.FC = () => {
@@ -34,282 +35,299 @@ export const CropHealthMonitor: React.FC = () => {
   }, []);
 
   const fetchCropHealth = async () => {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
+    // Simulate brief initial dataset fetch
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
     const mockCrops: CropHealth[] = [
       {
         fieldId: '1',
-        fieldName: t("health.fieldNorth") || 'North Field',
-        cropType: t("market.commodities.tomato") || 'Tomato',
+        fieldNameKey: 'health.fieldNorth',
+        cropTypeKey: 'market.commodities.tomato',
         healthScore: 85,
         issues: [
           {
             type: 'disease',
             severity: 'medium',
-            description: t("health.issueLeafBlight") || 'Simulated pattern: Early foliar spots',
-            recommendation: t("health.recoFungicide") || 'Educational advisory: Consult local extension officer for lab verification before treating.',
-            confidence: 0 // Unverified simulation
-          }
+            descriptionKey: 'health.issueLeafBlight',
+            recommendationKey: 'health.recoFungicide',
+            confidence: 0,
+          },
         ],
-        growthStage: t("health.stageFlowering") || 'Flowering',
+        growthStageKey: 'health.stageFlowering',
         expectedHarvest: '2025-02-15',
         yieldPrediction: 12.5,
-        lastScanned: `2 ${t("health.hoursAgo") || "hours ago"}`
+        lastScannedTime: `2 ${t('health.hoursAgo')}`,
       },
       {
         fieldId: '2',
-        fieldName: t("health.fieldSouth") || 'South Field',
-        cropType: t("market.commodities.onion") || 'Onion',
+        fieldNameKey: 'health.fieldSouth',
+        cropTypeKey: 'market.commodities.onion',
         healthScore: 92,
         issues: [],
-        growthStage: t("health.stageBulbDev") || 'Bulb Development',
+        growthStageKey: 'health.stageBulbDev',
         expectedHarvest: '2025-03-01',
         yieldPrediction: 8.2,
-        lastScanned: `1 ${t("health.dayAgo") || "day ago"}`
+        lastScannedTime: `1 ${t('health.dayAgo')}`,
       },
       {
         fieldId: '3',
-        fieldName: t("health.fieldEast") || 'East Field',
-        cropType: t("health.cropCabbage") || 'Cabbage',
+        fieldNameKey: 'health.fieldEast',
+        cropTypeKey: 'health.cropCabbage',
         healthScore: 78,
         issues: [
           {
             type: 'pest',
             severity: 'high',
-            description: t("health.issueAphids") || 'Simulated pattern: Foliage aphid clustering',
-            recommendation: t("health.recoNeem") || 'Educational advisory: Inspect underside of leaves and consult agricultural officer.',
-            confidence: 0
+            descriptionKey: 'health.issueAphids',
+            recommendationKey: 'health.recoNeem',
+            confidence: 0,
           },
           {
             type: 'nutrient',
             severity: 'low',
-            description: t("health.issueNitrogen") || 'Simulated pattern: Chlorosis pattern',
-            recommendation: t("health.recoUrea") || 'Educational advisory: Perform soil testing before nutrient supplementation.',
-            confidence: 0
-          }
+            descriptionKey: 'health.issueNitrogen',
+            recommendationKey: 'health.recoUrea',
+            confidence: 0,
+          },
         ],
-        growthStage: t("health.stageHeadFormation") || 'Head Formation',
+        growthStageKey: 'health.stageHeadFormation',
         expectedHarvest: '2025-02-28',
         yieldPrediction: 15.8,
-        lastScanned: `6 ${t("health.hoursAgo") || "hours ago"}`
-      }
+        lastScannedTime: `6 ${t('health.hoursAgo')}`,
+      },
     ];
-    
+
     setCrops(mockCrops);
     setSelectedCrop(mockCrops[0]);
     setLoading(false);
   };
 
-  const startAIScan = async () => {
+  const startSimulationScan = async () => {
     setScanning(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const updatedCrops = crops.map(crop => ({
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+
+    const updatedCrops = crops.map((crop) => ({
       ...crop,
-      lastScanned: t("health.justNow") || 'Just now',
-      healthScore: Math.min(100, crop.healthScore + Math.floor(Math.random() * 5))
+      lastScannedTime: t('health.justNow'),
+      healthScore: Math.min(98, Math.max(72, crop.healthScore + (Math.random() > 0.5 ? 2 : -2))),
     }));
-    
+
     setCrops(updatedCrops);
+    if (selectedCrop) {
+      const currentUpdated = updatedCrops.find((c) => c.fieldId === selectedCrop.fieldId);
+      if (currentUpdated) setSelectedCrop(currentUpdated);
+    }
     setScanning(false);
   };
 
-  const getHealthColor = (score: number) => {
-    if (score >= 90) return 'text-green-600 bg-green-100';
-    if (score >= 70) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
+  const getHealthBadge = (score: number) => {
+    if (score >= 90) return <Badge variant="lime">{score}% {t('health.healthy')}</Badge>;
+    if (score >= 75) return <Badge variant="warning">{score}% Moderate</Badge>;
+    return <Badge variant="danger">{score}% Low</Badge>;
   };
 
-  const getSeverityColor = (severity: string) => {
+  const getSeverityBadge = (severity: string) => {
     switch (severity) {
-      case 'high': return 'text-red-600 bg-red-100 border-red-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-100 border-yellow-200';
-      case 'low': return 'text-blue-600 bg-blue-100 border-blue-200';
-      default: return 'text-gray-600 bg-gray-100 border-gray-200';
+      case 'high':
+        return <Badge variant="danger">HIGH SEVERITY</Badge>;
+      case 'medium':
+        return <Badge variant="warning">MEDIUM SEVERITY</Badge>;
+      default:
+        return <Badge variant="default">LOW / MINOR</Badge>;
     }
   };
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg">
-        <div className="text-center py-12">
-          <motion.div 
-            className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          />
-          <p className="mt-4 text-gray-600 text-sm">{t("health.analyzingSat") || "Analyzing crop health with satellite imagery..."}</p>
-        </div>
+      <div className="max-w-4xl mx-auto p-8 bg-white rounded-2xl shadow-sm text-center space-y-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#1C4A3A] border-t-transparent mx-auto" />
+        <p className="text-xs text-[#787266]">{t('health.analyzingSat')}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-lg">
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h2 className="text-2xl font-bold text-gray-800">{t("health.title")}</h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                {t("health.simulationMode")}
-              </span>
+    <div className="max-w-6xl mx-auto space-y-6 text-[#0F2E24] py-2">
+      {/* Header Banner with Honest Demonstration Badge */}
+      <div className="agri-card p-6 sm:p-8 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7E3D8]">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Badge variant="warning">{t('health.simulationMode')}</Badge>
+              <span className="text-xs text-[#787266]">·</span>
+              <span className="text-xs text-[#787266] font-medium">Educational Prototype</span>
             </div>
-            <p className="text-gray-600 text-xs">{t("health.subtitle")}</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-display text-[#0F2E24]">
+              {t('health.title')}
+            </h1>
+            <p className="text-xs sm:text-sm text-[#787266] max-w-2xl">
+              {t('health.subtitle')}
+            </p>
           </div>
-          <motion.button
-            onClick={startAIScan}
+
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={startSimulationScan}
             disabled={scanning}
-            className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-2 self-start sm:self-auto"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            loading={scanning}
+            icon={<Zap className="w-4 h-4" />}
+            className="self-start sm:self-auto shrink-0"
           >
-            {scanning ? (
-              <>
-                <motion.div 
-                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                />
-                <span>{t("health.scanning") || "Scanning..."}</span>
-              </>
-            ) : (
-              <>
-                <Zap className="w-4 h-4" />
-                <span>{t("health.aiScan")}</span>
-              </>
-            )}
-          </motion.button>
+            {scanning ? t('health.scanning') : t('health.aiScan')}
+          </Button>
+        </div>
+
+        {/* Prominent Educational Notice Avoiding Actionable False Claims */}
+        <div className="p-3.5 rounded-xl bg-[#FAF9F5] border border-[#E7E3D8] flex items-start gap-2.5 text-xs text-[#787266]">
+          <ShieldAlert className="w-4 h-4 text-[#E9A23B] shrink-0 mt-0.5" />
+          <p className="leading-relaxed">
+            {t('health.simulationNotice')}
+          </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Crop List */}
-        <div className="lg:col-span-1">
-          <h3 className="text-base font-semibold text-gray-800 mb-3">{t("health.yourFields")}</h3>
-          <div className="space-y-3">
-            {crops.map((crop, index) => (
-              <motion.div
-                key={crop.fieldId}
-                className={`p-4 rounded-lg cursor-pointer transition-all duration-200 ${
-                  selectedCrop?.fieldId === crop.fieldId
-                    ? 'bg-green-100 border-2 border-green-300'
-                    : 'bg-white border-2 border-gray-200 hover:border-green-200'
-                }`}
-                onClick={() => setSelectedCrop(crop)}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.01 }}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-semibold text-gray-800 text-sm">{crop.fieldName}</h4>
-                  <div className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getHealthColor(crop.healthScore)}`}>
-                    {crop.healthScore}%
+        {/* Left Column: Sample Field List */}
+        <div className="lg:col-span-1 space-y-3">
+          <h2 className="text-sm font-bold text-[#0F2E24] px-1">
+            {t('health.yourFields')}
+          </h2>
+
+          <div className="space-y-2.5">
+            {crops.map((crop) => {
+              const isSelected = selectedCrop?.fieldId === crop.fieldId;
+              return (
+                <div
+                  key={crop.fieldId}
+                  onClick={() => setSelectedCrop(crop)}
+                  className={`p-4 rounded-xl border transition-all cursor-pointer space-y-2 ${
+                    isSelected
+                      ? 'bg-white border-[#1C4A3A] shadow-sm ring-1 ring-[#1C4A3A]'
+                      : 'bg-[#FAF9F5] border-[#E7E3D8] hover:bg-white hover:border-[#D3CDC0]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-xs text-[#0F2E24]">
+                      {t(crop.fieldNameKey)}
+                    </h3>
+                    {getHealthBadge(crop.healthScore)}
                   </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-[#787266]">
+                    <span>{t(crop.cropTypeKey)}</span>
+                    <span className="font-mono text-[10px] text-[#A8A092]">
+                      {t('health.lastScan')}: {crop.lastScannedTime}
+                    </span>
+                  </div>
+
+                  {crop.issues.length > 0 && (
+                    <div className="flex items-center gap-1.5 pt-1 border-t border-[#E7E3D8] text-[11px] font-semibold text-[#E9A23B]">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <span>{crop.issues.length} {t('health.issuesFound')}</span>
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-gray-600 mb-1">{crop.cropType}</p>
-                <p className="text-[11px] text-gray-400">{t("health.lastScan")}: {crop.lastScanned}</p>
-                {crop.issues.length > 0 && (
-                  <div className="flex items-center space-x-1 mt-2">
-                    <AlertTriangle className="w-3.5 h-3.5 text-yellow-600" />
-                    <span className="text-xs font-medium text-yellow-700">{crop.issues.length} {t("health.issuesFound") || "issue(s)"}</span>
-                  </div>
-                )}
-              </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* Detailed View */}
+        {/* Right Column: Detailed Demonstration View */}
         <div className="lg:col-span-2">
           {selectedCrop && (
-            <motion.div
-              key={selectedCrop.fieldId}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="bg-white rounded-lg p-6 shadow-md mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-800">{selectedCrop.fieldName}</h3>
-                  <div className={`px-3 py-1 rounded-full text-sm font-bold ${getHealthColor(selectedCrop.healthScore)}`}>
-                    {selectedCrop.healthScore}% {t("health.healthy") || "Healthy"}
-                  </div>
+            <div className="agri-card p-6 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E7E3D8]">
+                <div>
+                  <h3 className="text-base font-bold text-[#0F2E24] font-display">
+                    {t(selectedCrop.fieldNameKey)}
+                  </h3>
+                  <p className="text-xs text-[#787266] mt-0.5">
+                    {t(selectedCrop.cropTypeKey)} · {t(selectedCrop.growthStageKey)}
+                  </p>
+                </div>
+                {getHealthBadge(selectedCrop.healthScore)}
+              </div>
+
+              {/* Benchmark Stat Tiles */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 rounded-xl bg-[#FAF9F5] border border-[#E7E3D8] text-center space-y-1">
+                  <Activity className="w-4 h-4 text-[#1C4A3A] mx-auto" />
+                  <div className="text-xs font-bold text-[#0F2E24]">{t(selectedCrop.cropTypeKey)}</div>
+                  <div className="text-[10px] text-[#787266]">{t('health.cropType')}</div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <Activity className="w-5 h-5 text-green-600 mx-auto mb-1" />
-                    <div className="text-xs font-bold text-gray-800">{selectedCrop.cropType}</div>
-                    <div className="text-[11px] text-gray-500">{t("health.cropType")}</div>
-                  </div>
-                  
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <TrendingUp className="w-5 h-5 text-blue-600 mx-auto mb-1" />
-                    <div className="text-xs font-bold text-gray-800">{selectedCrop.growthStage}</div>
-                    <div className="text-[11px] text-gray-500">{t("health.growthStage")}</div>
-                  </div>
-                  
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-purple-600 mx-auto mb-1" />
-                    <div className="text-xs font-bold text-gray-800">{selectedCrop.yieldPrediction} tons</div>
-                    <div className="text-[11px] text-gray-500">{t("health.predictedYield")}</div>
-                  </div>
-                  
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <Camera className="w-5 h-5 text-orange-600 mx-auto mb-1" />
-                    <div className="text-xs font-bold text-gray-800">{selectedCrop.expectedHarvest}</div>
-                    <div className="text-[11px] text-gray-500">{t("health.expectedHarvest")}</div>
-                  </div>
+                <div className="p-3 rounded-xl bg-[#FAF9F5] border border-[#E7E3D8] text-center space-y-1">
+                  <TrendingUp className="w-4 h-4 text-[#1C4A3A] mx-auto" />
+                  <div className="text-xs font-bold text-[#0F2E24]">{t(selectedCrop.growthStageKey)}</div>
+                  <div className="text-[10px] text-[#787266]">{t('health.growthStage')}</div>
                 </div>
 
-                {/* Issues */}
+                <div className="p-3 rounded-xl bg-[#FAF9F5] border border-[#E7E3D8] text-center space-y-1">
+                  <Sparkles className="w-4 h-4 text-[#E9A23B] mx-auto" />
+                  <div className="text-xs font-mono font-bold text-[#0F2E24]">{selectedCrop.yieldPrediction} tons</div>
+                  <div className="text-[10px] text-[#787266]">{t('health.predictedYield')}</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#FAF9F5] border border-[#E7E3D8] text-center space-y-1">
+                  <Calendar className="w-4 h-4 text-[#1C4A3A] mx-auto" />
+                  <div className="text-xs font-mono font-bold text-[#0F2E24]">{selectedCrop.expectedHarvest}</div>
+                  <div className="text-[10px] text-[#787266]">{t('health.expectedHarvest')}</div>
+                </div>
+              </div>
+
+              {/* Agronomic Observations Section */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#787266]">
+                  {t('health.cropIssues')}
+                </h4>
+
                 {selectedCrop.issues.length > 0 ? (
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-800 mb-3">{t("health.cropIssues")}</h4>
-                    <div className="space-y-3">
-                      {selectedCrop.issues.map((issue, index) => (
-                        <motion.div
-                          key={index}
-                          className={`p-4 rounded-lg border ${getSeverityColor(issue.severity)}`}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <h5 className="font-semibold text-xs capitalize">
-                              {issue.type === 'disease' ? t("health.diseaseIssue") || 'Disease Health Issue' :
-                               issue.type === 'pest' ? t("health.pestIssue") || 'Pest Health Issue' :
-                               t("health.nutrientIssue") || 'Nutrient Issue'}
-                            </h5>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-[10px] font-bold uppercase tracking-wider">{issue.severity}</span>
-                              {issue.confidence > 0 ? (
-                                <span className="text-[10px]">({issue.confidence}% {t("health.confidence") || "confidence"})</span>
-                              ) : (
-                                <span className="text-[10px] text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded font-medium">Educational Pattern</span>
-                              )}
-                            </div>
-                          </div>
-                          <p className="text-xs mb-2 text-gray-700">{issue.description}</p>
-                          <div className="bg-white/80 rounded p-2 text-xs">
-                            <p className="font-semibold text-gray-800 mb-0.5">{t("health.recommendation") || "Recommendation"}:</p>
-                            <p className="text-gray-600">{issue.recommendation}</p>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
+                  <div className="space-y-3">
+                    {selectedCrop.issues.map((issue, idx) => (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] space-y-2.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-[#0F2E24]">
+                            {issue.type === 'disease'
+                              ? t('health.diseaseIssue')
+                              : issue.type === 'pest'
+                              ? t('health.pestIssue')
+                              : t('health.nutrientIssue')}
+                          </span>
+                          {getSeverityBadge(issue.severity)}
+                        </div>
+
+                        <p className="text-xs text-[#787266] leading-relaxed">
+                          {t(issue.descriptionKey)}
+                        </p>
+
+                        <div className="p-3 rounded-lg bg-white border border-[#E7E3D8] text-xs text-[#0F2E24] space-y-1">
+                          <span className="font-bold text-[#1C4A3A] block text-[11px] uppercase tracking-wide">
+                            {t('health.recommendations') || 'Recommendations'}:
+                          </span>
+                          <p className="text-[#787266] leading-relaxed">
+                            {t(issue.recommendationKey)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
-                    <h4 className="text-base font-semibold text-green-800 mb-1">{t("health.allGood") || "Crops Healthy"}</h4>
-                    <p className="text-xs text-green-600">{t("health.noIssuesDetected") || "No issues detected in this field. Your crops are healthy!"}</p>
+                  <div className="p-6 text-center rounded-xl bg-[#FAF9F5] border border-[#E7E3D8] space-y-2">
+                    <CheckCircle className="w-8 h-8 text-[#2F9E6B] mx-auto" />
+                    <h5 className="font-bold text-sm text-[#0F2E24]">
+                      {t('health.allGood')}
+                    </h5>
+                    <p className="text-xs text-[#787266] max-w-md mx-auto">
+                      {t('health.noIssuesDetected')}
+                    </p>
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
         </div>
       </div>

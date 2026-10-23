@@ -23,6 +23,7 @@ import {
 import { useLocalization } from "@/contexts/LocalizationContext";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import SEOHead from "@/components/SEOHead";
 
 type CapabilityStatus = "AVAILABLE" | "BETA" | "DEMONSTRATION" | "PILOT" | "UNAVAILABLE";
 
@@ -265,6 +266,11 @@ export const ServicesPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 text-[#0F2E24] py-4">
+      <SEOHead
+        title="Agricultural Service Portfolio & Operational Readiness"
+        description="Comprehensive directory of Farmculture AI's agronomic capabilities, verification status, data sources, and precision models."
+        canonicalPath="/services"
+      />
       {/* Page Header — Aligned with Reference B */}
       <div className="space-y-3 pb-6 border-b border-[#E7E3D8]">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1C4A3A]/10 text-[#1C4A3A] text-xs font-semibold tracking-wide uppercase">

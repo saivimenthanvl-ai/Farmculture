@@ -59,6 +59,7 @@ import {
 import { AppSidebar, MobileTabBar } from "./components/navigation/AppSidebar";
 import { CommandPalette } from "./components/ui/CommandPalette";
 import { OfflineBanner } from "./components/ui/OfflineBanner";
+import SEOHead from "./components/SEOHead";
 
 /** Shared Layout with AppSidebar, Sticky Header, Command Palette, and MobileTabBar */
 function AppLayout() {
@@ -125,6 +126,11 @@ function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
+      <SEOHead
+        title="Agri-Intelligence & Mandi Telemetry"
+        description="Verify real APMC mandi arrival prices, access AI foliar disease assistance, and examine demonstration agricultural models."
+        canonicalPath="/"
+      />
       {/* Hero Welcome Banner */}
       <div className="bg-[#0F2E24] text-white rounded-3xl p-6 sm:p-10 border border-[#1C4A3A] shadow-md relative overflow-hidden">
         <div className="relative z-10 max-w-2xl space-y-2">

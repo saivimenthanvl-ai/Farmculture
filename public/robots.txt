@@ -1,0 +1,22 @@
+# Farmculture AI Production Robots Directives
+# Target Host: https://farmculture.ai
+
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /services
+Allow: /privacy-policy
+Allow: /disclaimer
+Allow: /contact
+Allow: /crop-diagnosis
+Allow: /market-prices
+Allow: /weather
+
+# Disallow private user-specific and authenticated dashboard endpoints
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /settings/
+Disallow: /auth/
+
+# Sitemap reference
+Sitemap: https://farmculture.ai/sitemap.xml

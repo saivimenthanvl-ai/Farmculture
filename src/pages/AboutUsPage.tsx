@@ -16,12 +16,18 @@ import {
 import { useLocalization } from "@/contexts/LocalizationContext";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import SEOHead from "@/components/SEOHead";
 
 export const AboutUsPage: React.FC = () => {
   const { t } = useLocalization();
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 text-[#0F2E24] py-4">
+      <SEOHead
+        title="About Our Agricultural Mission"
+        description="Learn about Farmculture AI's mission, responsible agricultural engineering principles, and data transparency."
+        canonicalPath="/about"
+      />
       {/* Hero Section — Aligned with Reference A */}
       <section className="bg-gradient-to-br from-[#0F2E24] via-[#1C4A3A] to-[#0B231B] text-[#F6F4EE] rounded-3xl p-8 sm:p-12 shadow-xl relative overflow-hidden">
         {/* Subtle decorative geometric overlay */}
