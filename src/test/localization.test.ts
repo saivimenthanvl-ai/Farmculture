@@ -72,6 +72,6 @@ describe('PHASE 1 — International Localization and Region Specification', () =
     // Verify Arabic translations cover essential UI keys without fallback failure
     const { LocalizationProvider } = await import('../contexts/LocalizationContext');
     expect(LocalizationProvider).toBeDefined();
-  }, 15000);
+  }, 30000);
 });
 

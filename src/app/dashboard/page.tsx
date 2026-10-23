@@ -1,338 +1,776 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalization } from "@/contexts/LocalizationContext";
 import { StatTile } from "@/components/ui/StatTile";
 import { Badge } from "@/components/ui/Badge";
 import { Callout } from "@/components/ui/Callout";
+import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
+import { Tabs } from "@/components/ui/Tabs";
+import { EmptyState, ErrorState } from "@/components/ui/EmptyState";
+import { Skeleton, CardSkeleton } from "@/components/ui/Skeleton";
 import {
   CloudSun,
   TrendingUp,
   AlertTriangle,
-  CalendarCheck,
   Camera,
   ArrowRight,
-  Brain,
-  Droplets,
-  Wind,
+  Plus,
+  Tractor,
+  FileSpreadsheet,
+  History,
+  Layers,
+  MapPin,
+  Calendar,
   Sparkles,
-  ChevronRight,
-  Activity,
-  Package,
+  Trash2,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
 
 import { formatCurrencyAmount } from "@/lib/currencyService";
+import {
+  FarmRecord,
+  CropRecord,
+  getUserFarms,
+  saveFarm,
+  deleteFarm,
+  getUserCropRecords,
+  saveCropRecord,
+} from "@/lib/farmService";
+import {
+  getUserAssessmentHistory,
+  AssessmentRecord,
+} from "@/lib/cropDiagnosisService";
 
 export default function DashboardPage() {
   const { user, friendlyName } = useAuth();
   const { t, interfaceLocale, displayCurrency } = useLocalization();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Tab state derived from URL ?tab=farms | crops | overview
+  const activeTab = searchParams.get("tab") || "overview";
+  const setActiveTab = (tab: string) => {
+    setSearchParams(tab === "overview" ? {} : { tab });
+  };
+
+  // Farmer Real Data States
+  const [farms, setFarms] = useState<FarmRecord[]>([]);
+  const [crops, setCrops] = useState<CropRecord[]>([]);
+  const [assessments, setAssessments] = useState<AssessmentRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Modal States
+  const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Farm Form State
+  const [farmName, setFarmName] = useState("");
+  const [farmLocation, setFarmLocation] = useState("");
+  const [farmState, setFarmState] = useState("");
+  const [farmAcres, setFarmAcres] = useState<number>(5);
+  const [farmCrops, setFarmCrops] = useState("Tomato, Wheat");
+
+  // Crop Form State
+  const [selectedFarmId, setSelectedFarmId] = useState("");
+  const [cropName, setCropName] = useState("Tomato");
+  const [cropArea, setCropArea] = useState<number>(2.5);
+  const [cropPlantingDate, setCropPlantingDate] = useState(
+    new Date().toISOString().slice(0, 10)
+  );
 
   const farmerName = friendlyName || user?.displayName || user?.email?.split("@")[0] || "Farmer";
 
-  // Real-time calculated indicators
-  const statMetrics = [
-    {
-      title: "Today's Weather",
-      value: "28.4",
-      unit: "°C",
-      delta: "Clear sky · 62% humidity",
-      deltaType: "neutral" as const,
-      icon: CloudSun,
-      subtitle: "Pune Agri-Station",
-    },
-    {
-      title: "Top Mandi Price",
-      value: formatCurrencyAmount(2850, displayCurrency, interfaceLocale),
-      unit: "/qtl",
-      delta: "+4.8%",
-      deltaType: "increase" as const,
-      icon: TrendingUp,
-      subtitle: "Wheat (Sharbati) · Lasalgaon",
-    },
-    {
-      title: "Crops at Risk",
-      value: "1",
-      unit: "Plot",
-      delta: "Foliar blight alert",
-      deltaType: "decrease" as const,
-      icon: AlertTriangle,
-      subtitle: "Field 3B (Tomato)",
-    },
-    {
-      title: "Best Sell Window",
-      value: "Nov 04",
-      unit: "2026",
-      delta: "Expected gain +8.2%",
-      deltaType: "increase" as const,
-      icon: CalendarCheck,
-      subtitle: "Seasonal demand peak",
-    },
-  ];
+  // Load real user records from Firestore
+  const loadUserData = async () => {
+    if (!user?.uid) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const [fetchedFarms, fetchedCrops, fetchedAssessments] = await Promise.all([
+        getUserFarms(user.uid),
+        getUserCropRecords(user.uid),
+        getUserAssessmentHistory(user.uid),
+      ]);
+      setFarms(fetchedFarms);
+      setCrops(fetchedCrops);
+      setAssessments(fetchedAssessments);
+      if (fetchedFarms.length > 0 && !selectedFarmId) {
+        setSelectedFarmId(fetchedFarms[0].id);
+      }
+    } catch (err: any) {
+      console.error("[Dashboard] Error fetching farm data:", err);
+      setError("Unable to load cloud farm records. Please check your internet connection.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const recentDiagnoses = [
-    { crop: "Tomato", issue: "Early Leaf Blight (Alternaria)", severity: "Moderate", date: "Today, 09:30", confidence: 94 },
-    { crop: "Cotton", issue: "Healthy Foliage", severity: "Low", date: "21 Oct", confidence: 98 },
-    { crop: "Soybean", issue: "Rust Suspicion", severity: "High", date: "18 Oct", confidence: 89 },
-  ];
+  useEffect(() => {
+    loadUserData();
+  }, [user]);
 
-  const watchlist = [
-    { commodity: "Wheat (Sharbati)", current: "₹2,850", peak: "₹3,100", trend: "+4.8%", mandi: "Lasalgaon APMC", action: "Hold" },
-    { commodity: "Onion (Nashik Red)", current: "₹1,920", peak: "₹2,050", trend: "+1.2%", mandi: "Nashik APMC", action: "Sell Partial" },
-    { commodity: "Soybean (Yellow)", current: "₹4,650", peak: "₹4,950", trend: "-1.5%", mandi: "Indore Mandi", action: "Hold" },
-    { commodity: "Basmati Rice (1121)", current: "₹4,120", peak: "₹4,300", trend: "+3.4%", mandi: "Karnal Mandi", action: "Hold" },
-  ];
+  // Handle Farm Creation
+  const handleCreateFarm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.uid || !farmName.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await saveFarm(user.uid, {
+        name: farmName.trim(),
+        location: farmLocation.trim() || "Local Agro Zone",
+        state: farmState.trim() || "National",
+        totalAcres: Number(farmAcres) || 1,
+        primaryCrops: farmCrops.split(",").map((c) => c.trim()).filter(Boolean),
+        soilType: "Loamy alluvial",
+        irrigationType: "Drip & Canal",
+      });
+      if (res.success) {
+        setIsFarmModalOpen(false);
+        setFarmName("");
+        setFarmLocation("");
+        await loadUserData();
+      } else {
+        alert(res.error || "Failed to create farm");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle Crop Record Creation
+  const handleCreateCrop = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.uid || !cropName.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await saveCropRecord(user.uid, {
+        farmId: selectedFarmId || "default",
+        cropName: cropName.trim(),
+        areaAcres: Number(cropArea) || 1,
+        plantingDate: cropPlantingDate,
+        status: "vegetative",
+      });
+      if (res.success) {
+        setIsCropModalOpen(false);
+        await loadUserData();
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle Farm Deletion
+  const handleDeleteFarm = async (farmId: string) => {
+    if (!user?.uid) return;
+    if (window.confirm("Are you sure you want to remove this farm plot?")) {
+      await deleteFarm(user.uid, farmId);
+      await loadUserData();
+    }
+  };
+
+  // Derived real KPIs (no imaginary numbers)
+  const totalAcreage = farms.reduce((acc, f) => acc + (f.totalAcres || 0), 0);
+  const totalPlots = farms.length;
+  const activeCropCount = crops.length;
+  const recentDiagnosticCount = assessments.length;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Welcome & Role-aware Hero */}
-      <div className="bg-[#0F2E24] rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden border border-[#1C4A3A] shadow-md">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Badge variant="lime" dot>
-                Live Agri-Station
-              </Badge>
-              <span className="text-xs text-emerald-300 font-mono">Telemetry v2.2</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight font-display">
-              Welcome back, {farmerName}
-            </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/90 max-w-2xl leading-relaxed">
-              Your farm intelligence nexus: real-time Agmarknet mandi rates, predictive harvest models, and foliar disease diagnosis.
-            </p>
+      {/* Header and Quick Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7E3D8]">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#1C4A3A]">
+              Farmer Portal
+            </span>
+            <span className="text-[#A8A092]">·</span>
+            <Badge variant="lime" dot>
+              {user ? "Cloud Synchronized" : "Guest Mode"}
+            </Badge>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/crop-diagnosis"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#9BE564] text-[#0F2E24] font-bold text-xs hover:bg-[#8BD853] transition-all shadow-sm"
-            >
-              <Camera className="w-4 h-4" />
-              <span>Scan Crop Foliage</span>
-            </Link>
-            <Link
-              to="/predictor"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1C4A3A] text-white hover:bg-[#265B47] border border-[#2F9E6B]/40 font-bold text-xs transition-all"
-            >
-              <Brain className="w-4 h-4 text-[#9BE564]" />
-              <span>Price Simulator</span>
-            </Link>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F2E24] tracking-tight font-display">
+            Welcome back, {farmerName}
+          </h1>
+          <p className="text-xs sm:text-sm text-[#787266] mt-0.5">
+            Your centralized agricultural operational center. Real farm plots, crop health records, and mandi intelligence.
+          </p>
         </div>
-      </div>
 
-      {/* Top Row: 4 Critical StatTiles */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statMetrics.map((stat) => (
-          <StatTile
-            key={stat.title}
-            title={stat.title}
-            value={stat.value}
-            unit={stat.unit}
-            delta={stat.delta}
-            deltaType={stat.deltaType}
-            icon={stat.icon}
-            subtitle={stat.subtitle}
-          />
-        ))}
-      </div>
-
-      {/* Middle Grid: Weather Telemetry Strip & Watchlist */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 7-Day Microclimate Telemetry */}
-        <div className="agri-card p-5 lg:col-span-1 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-sm font-bold text-[#0F2E24]">7-Day Weather Strip</h3>
-                <p className="text-[11px] text-[#787266]">Open-Meteo agricultural forecast</p>
-              </div>
-              <Badge variant="outline">Spray Window Safe</Badge>
-            </div>
-
-            <div className="space-y-2.5">
-              {[
-                { day: "Today", temp: "28° / 19°", rain: "0%", status: "Ideal Spray" },
-                { day: "Tomorrow", temp: "29° / 20°", rain: "5%", status: "Good" },
-                { day: "Friday", temp: "27° / 18°", rain: "15%", status: "Windy" },
-                { day: "Saturday", temp: "26° / 19°", rain: "40%", status: "Pre-irrigate" },
-                { day: "Sunday", temp: "25° / 17°", rain: "10%", status: "Clear" },
-              ].map((item, idx) => (
-                <div
-                  key={item.day}
-                  className={`flex items-center justify-between p-2.5 rounded-lg text-xs ${
-                    idx === 0 ? "bg-[#FAF9F5] border border-[#E7E3D8]" : "hover:bg-[#FAF9F5]"
-                  }`}
-                >
-                  <span className="font-semibold text-[#0F2E24] w-20">{item.day}</span>
-                  <span className="font-mono text-[#787266]">{item.temp}</span>
-                  <span className="text-[11px] text-[#2F9E6B] font-medium">{item.status}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <Link
-            to="/weather"
-            className="mt-4 pt-3 border-t border-[#E7E3D8] flex items-center justify-between text-xs font-bold text-[#1C4A3A] hover:text-[#0F2E24]"
+        <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => setIsFarmModalOpen(true)}
+            icon={<Plus className="w-4 h-4" />}
           >
-            <span>Full Meteorological Telemetry</span>
-            <ChevronRight className="w-4 h-4" />
+            Add Farm Plot
+          </Button>
+          <Link to="/crop-diagnosis">
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Camera className="w-4 h-4" />}
+            >
+              Scan Foliage
+            </Button>
           </Link>
         </div>
-
-        {/* Live Mandi Watchlist & Strategy */}
-        <div className="agri-card p-5 lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-bold text-[#0F2E24]">Commodity Watchlist &amp; Selling Strategy</h3>
-              <p className="text-[11px] text-[#787266]">Agmarknet mandi rates · Updated today</p>
-            </div>
-            <Link
-              to="/market-prices"
-              className="text-xs font-bold text-[#1C4A3A] hover:underline flex items-center gap-1"
-            >
-              <span>Explore All Mandis</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-[#E7E3D8] text-[11px] uppercase tracking-wider text-[#787266]">
-                  <th className="py-2 font-bold">Commodity</th>
-                  <th className="py-2 font-bold">Arrival Mandi</th>
-                  <th className="py-2 font-bold">Current Rate</th>
-                  <th className="py-2 font-bold">Simulated Peak</th>
-                  <th className="py-2 font-bold">Strategy</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F3F1E9]">
-                {watchlist.map((item) => (
-                  <tr key={item.commodity} className="hover:bg-[#FAF9F5] transition-colors">
-                    <td className="py-3 font-bold text-[#0F2E24]">{item.commodity}</td>
-                    <td className="py-3 text-[#787266]">{item.mandi}</td>
-                    <td className="py-3 font-mono font-semibold text-[#0F2E24]">
-                      {item.current}
-                      <span className="ml-1.5 text-[10px] text-[#2F9E6B] font-sans font-bold">{item.trend}</span>
-                    </td>
-                    <td className="py-3 font-mono text-[#787266]">{item.peak}</td>
-                    <td className="py-3">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                          item.action === "Hold"
-                            ? "bg-[#FAF9F5] text-[#1C4A3A] border border-[#D3CDC0]"
-                            : "bg-[#FDF4E7] text-[#E9A23B] border border-[#E9A23B]/40"
-                        }`}
-                      >
-                        {item.action}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
-      {/* Bottom Grid: Recent Foliage Scans & Agronomic Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Diagnoses */}
-        <div className="agri-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-bold text-[#0F2E24]">Recent Foliar Diagnoses</h3>
-              <p className="text-[11px] text-[#787266]">AI vision inspections with KVK advisory links</p>
-            </div>
-            <Link
-              to="/crop-diagnosis"
-              className="text-xs font-bold text-[#1C4A3A] hover:underline"
-            >
-              New Scan
-            </Link>
+      {/* Navigation Tabs (Overview, Farms, Crop Records) */}
+      <Tabs
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        tabs={[
+          { id: "overview", label: "Farm Overview", icon: <Tractor className="w-3.5 h-3.5" /> },
+          { id: "farms", label: "Registered Farms", count: totalPlots, icon: <Layers className="w-3.5 h-3.5" /> },
+          { id: "crops", label: "Active Crop Records", count: activeCropCount, icon: <FileSpreadsheet className="w-3.5 h-3.5" /> },
+        ]}
+      />
+
+      {error && (
+        <ErrorState
+          title="Data Synchronization Notice"
+          message={error}
+          onRetry={loadUserData}
+        />
+      )}
+
+      {/* TAB 1: OVERVIEW */}
+      {activeTab === "overview" && (
+        <div className="space-y-6">
+          {/* Top Row: Authentic User KPIs (No synthetic claims) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatTile
+              title="Registered Farms"
+              value={loading ? "…" : totalPlots}
+              unit="Plots"
+              delta={totalPlots === 0 ? "No plots added" : "Active production"}
+              deltaType="neutral"
+              icon={Tractor}
+              subtitle="Owner authenticated"
+            />
+            <StatTile
+              title="Total Cultivated Land"
+              value={loading ? "…" : totalAcreage}
+              unit="Acres"
+              delta={totalAcreage > 0 ? "Under management" : "Awaiting farm entry"}
+              deltaType="neutral"
+              icon={Layers}
+              subtitle="Registered area"
+            />
+            <StatTile
+              title="Active Crop Cycles"
+              value={loading ? "…" : activeCropCount}
+              unit="Crops"
+              delta={activeCropCount > 0 ? "Field monitoring active" : "No crops tracked"}
+              deltaType="neutral"
+              icon={FileSpreadsheet}
+              subtitle="Seasonal plantings"
+            />
+            <StatTile
+              title="Foliar Inspections"
+              value={loading ? "…" : recentDiagnosticCount}
+              unit="Scans"
+              delta={recentDiagnosticCount > 0 ? "Assessment log active" : "Zero diagnostic history"}
+              deltaType="neutral"
+              icon={History}
+              subtitle="AI vision log"
+            />
           </div>
 
-          <div className="space-y-3">
-            {recentDiagnoses.map((diag, i) => (
-              <div
-                key={i}
-                className="p-3 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] flex items-center justify-between"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-[#0F2E24]">{diag.crop}</span>
-                    <Badge
-                      variant={
-                        diag.severity === "High"
-                          ? "danger"
-                          : diag.severity === "Moderate"
-                          ? "warning"
-                          : "success"
-                      }
-                    >
-                      {diag.severity} Severity
-                    </Badge>
+          {/* If farmer has no farms, show actionable empty state */}
+          {!loading && totalPlots === 0 ? (
+            <EmptyState
+              icon={<Tractor className="w-8 h-8 text-[#1C4A3A]" />}
+              title="Welcome to Your Farm Hub! No Farms Registered Yet"
+              description="Register your first agricultural land plot to track cultivated acreage, monitor localized weather telemetry, and log crop health."
+              action={{
+                label: "Register First Farm Plot",
+                onClick: () => setIsFarmModalOpen(true),
+                icon: <Plus className="w-4 h-4" />,
+              }}
+            />
+          ) : (
+            /* Farm Overview Details */
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column: Registered Plots List (2 cols) */}
+              <div className="agri-card p-5 lg:col-span-2 space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-[#E7E3D8]">
+                  <div>
+                    <h3 className="text-sm font-bold text-[#0F2E24]">Your Agricultural Land Holdings</h3>
+                    <p className="text-[11px] text-[#787266]">Authenticated cloud records</p>
                   </div>
-                  <p className="text-xs text-[#787266] mt-0.5">{diag.issue}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsFarmModalOpen(true)}
+                    icon={<Plus className="w-3.5 h-3.5" />}
+                  >
+                    Add Plot
+                  </Button>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs font-bold text-[#1C4A3A]">{diag.confidence}% confidence</div>
-                  <div className="text-[10px] text-[#A8A092]">{diag.date}</div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {farms.map((f) => (
+                    <div
+                      key={f.id}
+                      className="p-4 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] hover:bg-white transition-all space-y-2 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between">
+                          <h4 className="text-xs font-bold text-[#0F2E24]">{f.name}</h4>
+                          <span className="text-[10px] font-mono font-bold text-[#1C4A3A] bg-white px-2 py-0.5 rounded border border-[#E7E3D8]">
+                            {f.totalAcres} Acres
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px] text-[#787266] mt-1">
+                          <MapPin className="w-3 h-3 text-[#1C4A3A]" />
+                          <span>{f.location}, {f.state}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {f.primaryCrops.map((c, i) => (
+                            <Badge key={i} variant="outline">
+                              {c}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-[#E7E3D8] flex items-center justify-between text-[11px]">
+                        <span className="text-[#A8A092]">ID: {f.id.slice(0, 8)}</span>
+                        <button
+                          onClick={() => handleDeleteFarm(f.id)}
+                          className="text-[#C8553D] hover:underline flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Remove</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Direct Action Hub */}
-        <div className="agri-card p-5 flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-[#0F2E24] mb-1">Agronomic Field Actions</h3>
-            <p className="text-[11px] text-[#787266] mb-4">Verified tools ready for immediate execution</p>
+              {/* Right Column: Recent Foliar Inspections (1 col) */}
+              <div className="agri-card p-5 space-y-4 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E7E3D8]">
+                    <div>
+                      <h3 className="text-sm font-bold text-[#0F2E24]">Recent Diagnostics</h3>
+                      <p className="text-[11px] text-[#787266]">Saved plant health logs</p>
+                    </div>
+                    <Link to="/crop-diagnosis" className="text-xs font-bold text-[#1C4A3A] hover:underline">
+                      New Scan
+                    </Link>
+                  </div>
 
-            <div className="grid grid-cols-2 gap-3">
+                  {assessments.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-[#787266]">
+                      <Camera className="w-6 h-6 text-[#A8A092] mx-auto mb-2 opacity-60" />
+                      <span>No plant inspections logged yet.</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5 mt-3">
+                      {assessments.slice(0, 3).map((a) => (
+                        <div
+                          key={a.id}
+                          className="p-3 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] text-xs space-y-1"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-[#0F2E24]">{a.crop || "Plant"}</span>
+                            <Badge
+                              variant={
+                                a.severity === "high"
+                                  ? "danger"
+                                  : a.severity === "medium"
+                                  ? "warning"
+                                  : "success"
+                              }
+                            >
+                              {a.severity?.toUpperCase()} RISK
+                            </Badge>
+                          </div>
+                          <p className="text-[#787266] truncate">{a.condition}</p>
+                          <div className="text-[10px] text-[#A8A092] font-mono">
+                            {new Date(a.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Link
+                  to="/crop-diagnosis?tab=history"
+                  className="mt-4 pt-3 border-t border-[#E7E3D8] flex items-center justify-between text-xs font-bold text-[#1C4A3A] hover:text-[#0F2E24]"
+                >
+                  <span>View Complete History ({assessments.length})</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Production Tools Strip */}
+          <div className="agri-card p-5">
+            <h3 className="text-sm font-bold text-[#0F2E24] mb-3">Quick Agronomic Actions</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Link
-                to="/traceability"
-                className="p-3 rounded-xl border border-[#E7E3D8] hover:border-[#9BE564] hover:bg-[#FAF9F5] transition-all group"
+                to="/market-prices"
+                className="p-3.5 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] hover:bg-white hover:border-[#9BE564] transition-all text-left group"
               >
-                <Package className="w-5 h-5 text-[#1C4A3A] group-hover:text-[#2F9E6B] mb-2" />
-                <div className="text-xs font-bold text-[#0F2E24]">Product Passport</div>
-                <div className="text-[10px] text-[#787266]">Generate QR batch passport</div>
+                <TrendingUp className="w-5 h-5 text-[#1C4A3A] group-hover:text-[#2F9E6B] mb-2" />
+                <div className="text-xs font-bold text-[#0F2E24]">Mandi Prices</div>
+                <div className="text-[10px] text-[#787266]">Official Agmarknet rates</div>
+              </Link>
+              <Link
+                to="/weather"
+                className="p-3.5 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] hover:bg-white hover:border-[#9BE564] transition-all text-left group"
+              >
+                <CloudSun className="w-5 h-5 text-[#3E8E8A] mb-2" />
+                <div className="text-xs font-bold text-[#0F2E24]">Weather Telemetry</div>
+                <div className="text-[10px] text-[#787266]">Spray windows &amp; rain</div>
               </Link>
               <Link
                 to="/schemes"
-                className="p-3 rounded-xl border border-[#E7E3D8] hover:border-[#9BE564] hover:bg-[#FAF9F5] transition-all group"
+                className="p-3.5 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] hover:bg-white hover:border-[#9BE564] transition-all text-left group"
               >
                 <Sparkles className="w-5 h-5 text-[#E9A23B] mb-2" />
-                <div className="text-xs font-bold text-[#0F2E24]">Schemes &amp; Grants</div>
-                <div className="text-[10px] text-[#787266]">PM-Kisan &amp; State subsidies</div>
+                <div className="text-xs font-bold text-[#0F2E24]">Government Schemes</div>
+                <div className="text-[10px] text-[#787266]">Verified subsidy portals</div>
               </Link>
-              <Link
-                to="/restaurants"
-                className="p-3 rounded-xl border border-[#E7E3D8] hover:border-[#9BE564] hover:bg-[#FAF9F5] transition-all group"
+              <button
+                onClick={() => setIsCropModalOpen(true)}
+                className="p-3.5 rounded-xl border border-[#E7E3D8] bg-[#FAF9F5] hover:bg-white hover:border-[#9BE564] transition-all text-left group"
               >
-                <Activity className="w-5 h-5 text-[#2F9E6B] mb-2" />
-                <div className="text-xs font-bold text-[#0F2E24]">Produce Direct</div>
-                <div className="text-[10px] text-[#787266]">Farm-to-restaurant buyer contracts</div>
-              </Link>
-              <Link
-                to="/storage"
-                className="p-3 rounded-xl border border-[#E7E3D8] hover:border-[#9BE564] hover:bg-[#FAF9F5] transition-all group"
-              >
-                <Droplets className="w-5 h-5 text-[#3E8E8A] mb-2" />
-                <div className="text-xs font-bold text-[#0F2E24]">Cold Storage Hubs</div>
-                <div className="text-[10px] text-[#787266]">Locate nearby certified warehouses</div>
-              </Link>
+                <FileSpreadsheet className="w-5 h-5 text-[#2F9E6B] mb-2" />
+                <div className="text-xs font-bold text-[#0F2E24]">Log Crop Cycle</div>
+                <div className="text-[10px] text-[#787266]">Track planting to harvest</div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: REGISTERED FARMS */}
+      {activeTab === "farms" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-[#E7E3D8]">
+            <div>
+              <h2 className="text-base font-bold text-[#0F2E24]">Agricultural Holdings &amp; Plots</h2>
+              <p className="text-xs text-[#787266]">Owner-partitioned land records stored in Firestore</p>
+            </div>
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => setIsFarmModalOpen(true)}
+              icon={<Plus className="w-4 h-4" />}
+            >
+              Add Plot
+            </Button>
+          </div>
+
+          {farms.length === 0 ? (
+            <EmptyState
+              icon={<Tractor className="w-8 h-8 text-[#1C4A3A]" />}
+              title="No Farms Registered"
+              description="You have not created any farm plots yet. Add your land coordinates and crop history."
+              action={{
+                label: "Add Farm Plot",
+                onClick: () => setIsFarmModalOpen(true),
+                icon: <Plus className="w-4 h-4" />,
+              }}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {farms.map((farm) => (
+                <div key={farm.id} className="agri-card p-5 space-y-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between">
+                      <h3 className="text-sm font-bold text-[#0F2E24]">{farm.name}</h3>
+                      <span className="text-xs font-mono font-bold text-[#1C4A3A] bg-[#FAF9F5] px-2 py-0.5 rounded border border-[#E7E3D8]">
+                        {farm.totalAcres} Acres
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-[#787266] mt-1">
+                      <MapPin className="w-3.5 h-3.5 text-[#1C4A3A]" />
+                      <span>{farm.location}, {farm.state}</span>
+                    </div>
+                    <div className="mt-3 space-y-1 text-xs text-[#787266]">
+                      <div><strong>Soil Profile:</strong> {farm.soilType || "Standard Alluvial"}</div>
+                      <div><strong>Irrigation:</strong> {farm.irrigationType || "Drip system"}</div>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {farm.primaryCrops.map((c, i) => (
+                        <Badge key={i} variant="outline">
+                          {c}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-[#E7E3D8] flex items-center justify-between text-xs">
+                    <span className="text-[#A8A092] font-mono text-[10px]">
+                      Created {new Date(farm.createdAt).toLocaleDateString()}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteFarm(farm.id)}
+                      className="text-[#C8553D] hover:underline font-bold text-xs"
+                    >
+                      Delete Plot
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: CROP RECORDS */}
+      {activeTab === "crops" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-[#E7E3D8]">
+            <div>
+              <h2 className="text-base font-bold text-[#0F2E24]">Active Field Crop Cycles</h2>
+              <p className="text-xs text-[#787266]">Sowing dates, stage tracking, and harvest expectations</p>
+            </div>
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => setIsCropModalOpen(true)}
+              icon={<Plus className="w-4 h-4" />}
+            >
+              Log New Crop
+            </Button>
+          </div>
+
+          {crops.length === 0 ? (
+            <EmptyState
+              icon={<FileSpreadsheet className="w-8 h-8 text-[#1C4A3A]" />}
+              title="No Active Crop Cycles Logged"
+              description="Record your seed variety, sowing date, and field acreage to track crop progress."
+              action={{
+                label: "Log Crop Record",
+                onClick: () => setIsCropModalOpen(true),
+                icon: <Plus className="w-4 h-4" />,
+              }}
+            />
+          ) : (
+            <div className="agri-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#FAF9F5] border-b border-[#E7E3D8] text-[11px] uppercase font-bold text-[#787266]">
+                    <tr>
+                      <th className="p-3.5">Crop Name</th>
+                      <th className="p-3.5">Area (Acres)</th>
+                      <th className="p-3.5">Sowing Date</th>
+                      <th className="p-3.5">Growth Stage</th>
+                      <th className="p-3.5">Record Timestamp</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#F3F1E9]">
+                    {crops.map((c) => (
+                      <tr key={c.id} className="hover:bg-[#FAF9F5] transition-colors">
+                        <td className="p-3.5 font-bold text-[#0F2E24]">{c.cropName}</td>
+                        <td className="p-3.5 font-mono text-[#0F2E24]">{c.areaAcres}</td>
+                        <td className="p-3.5 text-[#787266]">{c.plantingDate}</td>
+                        <td className="p-3.5">
+                          <Badge variant="lime">
+                            {c.status.toUpperCase()}
+                          </Badge>
+                        </td>
+                        <td className="p-3.5 text-[#A8A092] font-mono text-[10px]">
+                          {new Date(c.createdAt).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* CREATE FARM MODAL DIALOG */}
+      <Dialog
+        isOpen={isFarmModalOpen}
+        onClose={() => setIsFarmModalOpen(false)}
+        title="Register Farm Plot"
+        description="Add a new agricultural parcel to track crops, soil health, and weather."
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsFarmModalOpen(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleCreateFarm}
+              loading={submitting}
+            >
+              Save Plot
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreateFarm} className="space-y-3.5">
+          <div>
+            <label className="agri-label block mb-1">Farm / Plot Name</label>
+            <input
+              type="text"
+              required
+              value={farmName}
+              onChange={(e) => setFarmName(e.target.value)}
+              placeholder="e.g. North Orchard, Plot 4B"
+              className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="agri-label block mb-1">Taluka / Village</label>
+              <input
+                type="text"
+                value={farmLocation}
+                onChange={(e) => setFarmLocation(e.target.value)}
+                placeholder="e.g. Niphad, Nashik"
+                className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
+              />
+            </div>
+            <div>
+              <label className="agri-label block mb-1">State / Province</label>
+              <input
+                type="text"
+                value={farmState}
+                onChange={(e) => setFarmState(e.target.value)}
+                placeholder="e.g. Maharashtra"
+                className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
+              />
             </div>
           </div>
 
-          <Callout variant="info" title="Seasonal Advisory" className="mt-4">
-            Rabi season sowing guidelines updated for Maharashtra and Madhya Pradesh. Ensure seed treatment before sowing.
-          </Callout>
-        </div>
-      </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="agri-label block mb-1">Total Acreage</label>
+              <input
+                type="number"
+                min="0.5"
+                step="0.5"
+                value={farmAcres}
+                onChange={(e) => setFarmAcres(Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
+              />
+            </div>
+            <div>
+              <label className="agri-label block mb-1">Primary Crops</label>
+              <input
+                type="text"
+                value={farmCrops}
+                onChange={(e) => setFarmCrops(e.target.value)}
+                placeholder="e.g. Tomato, Onion, Wheat"
+                className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
+              />
+            </div>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* CREATE CROP RECORD MODAL DIALOG */}
+      <Dialog
+        isOpen={isCropModalOpen}
+        onClose={() => setIsCropModalOpen(false)}
+        title="Log Active Crop Cycle"
+        description="Record current plantings to track germination, flowering, and harvest."
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsCropModalOpen(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleCreateCrop}
+              loading={submitting}
+            >
+              Log Crop
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreateCrop} className="space-y-3.5">
+          {farms.length > 0 && (
+            <div>
+              <label className="agri-label block mb-1">Select Farm Plot</label>
+              <select
+                value={selectedFarmId}
+                onChange={(e) => setSelectedFarmId(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
+              >
+                {farms.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name} ({f.totalAcres} Acres)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div>
+            <label className="agri-label block mb-1">Crop Name &amp; Variety</label>
+            <input
+              type="text"
+              required
+              value={cropName}
+              onChange={(e) => setCropName(e.target.value)}
+              placeholder="e.g. Tomato (Hybrid Abhinav)"
+              className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="agri-label block mb-1">Planted Area (Acres)</label>
+              <input
+                type="number"
+                min="0.25"
+                step="0.25"
+                value={cropArea}
+                onChange={(e) => setCropArea(Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
+              />
+            </div>
+            <div>
+              <label className="agri-label block mb-1">Sowing Date</label>
+              <input
+                type="date"
+                value={cropPlantingDate}
+                onChange={(e) => setCropPlantingDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-[#D3CDC0] bg-white text-xs font-semibold text-[#0F2E24] focus:outline-none focus:ring-2 focus:ring-[#3E8E8A]"
+              />
+            </div>
+          </div>
+        </form>
+      </Dialog>
     </div>
   );
 }

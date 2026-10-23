@@ -6,7 +6,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { NAV_ITEMS } from "./navigation/AppSidebar";
+import { NAV_CATEGORIES } from "./navigation/AppSidebar";
 
 interface HeaderProps {
   isListening: boolean;
@@ -25,8 +25,11 @@ export default function Header({ isListening, onToggleListening, onOpenMobileMen
   const nameToShow = (friendlyName?.split(" ")[0] ?? "Farmer").slice(0, 16);
   const initial = nameToShow.charAt(0).toUpperCase();
 
-  // Find active route label for breadcrumbs
-  const currentNav = NAV_ITEMS.find((item) => item.path === location.pathname);
+  // Find active route label for breadcrumbs across all categorized items
+  const allNavItems = NAV_CATEGORIES.flatMap((c) => c.items);
+  const currentNav = allNavItems.find(
+    (item) => item.path === location.pathname || item.path.split("?")[0] === location.pathname
+  );
 
   // Close dropdown on outside click or Escape key
   useEffect(() => {

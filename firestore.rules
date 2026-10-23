@@ -18,6 +18,16 @@ service cloud.firestore {
       match /assessments/{assessmentId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Farm records strictly owner-restricted
+      match /farms/{farmId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Active crop records strictly owner-restricted
+      match /crop_records/{cropId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
     
     // Support requests submitted through Contact Us portal

@@ -31,6 +31,12 @@ describe('FC-08 Firestore Security Rules Structure', () => {
     expect(content).toContain("request.auth.uid == userId");
   });
 
+  it('enforces owner restriction on farms and crop_records subcollections', () => {
+    const content = fs.readFileSync(rulesPath, 'utf-8');
+    expect(content).toContain("match /farms/{farmId}");
+    expect(content).toContain("match /crop_records/{cropId}");
+  });
+
   it('storage.rules exists and restricts crop assessment uploads to authenticated owner', () => {
     const storageRulesPath = path.resolve(__dirname, '../../storage.rules');
     expect(fs.existsSync(storageRulesPath)).toBe(true);
