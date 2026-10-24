@@ -24,7 +24,7 @@ import {
 } from "@/lib/accountDeletionService";
 
 export const AccountSettingsPage: React.FC = () => {
-  const { user, friendlyName } = useAuth();
+  const { user, profile, friendlyName, authoritativeEmail, loading } = useAuth();
   const { t } = useLocalization();
   const navigate = useNavigate();
 
@@ -40,6 +40,15 @@ export const AccountSettingsPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletionProgress, setDeletionProgress] = useState<DeletionProgress | null>(null);
   const [deletionError, setDeletionError] = useState<string | null>(null);
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-8 text-center">
+        <Loader2 className="w-8 h-8 text-[#1C4A3A] animate-spin mx-auto mb-3" />
+        <p className="text-xs text-[#787266]">Loading account settings...</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return null;
@@ -159,7 +168,7 @@ export const AccountSettingsPage: React.FC = () => {
               {t("account.emailAddress")}
             </span>
             <div className="text-sm font-mono font-bold text-[#0F2E24] truncate">
-              {user.email || "No email linked"}
+              {authoritativeEmail || profile?.email || user.email || t("account.noEmailLinked") || "No email linked"}
             </div>
           </div>
 

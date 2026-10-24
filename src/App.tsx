@@ -329,13 +329,7 @@ function HomePage() {
 
 /** Voice Assistant Wrapper */
 function VoiceAssistantRoute() {
-  const [isListening, setIsListening] = useState(false);
-  return (
-    <VoiceAssistant
-      isListening={isListening}
-      onToggleListening={() => setIsListening((v) => !v)}
-    />
-  );
+  return <VoiceAssistant />;
 }
 
 import { LocalizationProvider } from "./contexts/LocalizationContext";

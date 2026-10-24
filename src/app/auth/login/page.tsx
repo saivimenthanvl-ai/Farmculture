@@ -12,6 +12,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { syncUserProfile } from '@/lib/userProfileService';
 
 /**
  * Validates returnTo path to prevent Open Redirect vulnerabilities.
@@ -94,7 +95,7 @@ export default function LoginPage() {
         await updateProfile(cred.user, { displayName: name });
       }
 
-      await saveUser(cred.user.uid, cred.user.displayName, cred.user.email);
+      await syncUserProfile(cred.user, 'password');
       navigate(safeDestination);
     } catch (err: any) {
       setErrorMsg(err.message || 'Authentication failed. Please verify credentials.');
@@ -107,10 +108,18 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const cred = await signInWithPopup(auth, new GoogleAuthProvider());
-      await saveUser(cred.user.uid, cred.user.displayName, cred.user.email);
+      const provider = new GoogleAuthProvider();
+      // Prompt user to select account to ensure seamless switching between accounts
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const cred = await signInWithPopup(auth, provider);
+      await syncUserProfile(cred.user, 'google.com');
       navigate(safeDestination);
     } catch (err: any) {
+      // Don't show confusing error if user simply closed the popup
+      if (err?.code === 'auth/popup-closed-by-user') {
+        setLoading(false);
+        return;
+      }
       setErrorMsg(err.message || 'Google authentication was cancelled or failed.');
     } finally {
       setLoading(false);
@@ -122,10 +131,10 @@ export default function LoginPage() {
       <div className="w-full max-sm:px-4 sm:w-[420px] bg-white rounded-2xl shadow-xl p-8">
         {/* Brand */}
         <div className="flex items-center gap-3 mb-6">
-          <span className="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-emerald-100 text-emerald-700 font-bold text-xl">
-            🌾
-          </span>
-          <h1 className="text-2xl font-bold text-emerald-700 tracking-tight">Farmculture</h1>
+          <div className="w-10 h-10 rounded-lg bg-[#9BE564] text-[#0F2E24] flex items-center justify-center font-extrabold text-xl shrink-0 shadow-xs">
+            F
+          </div>
+          <h1 className="text-2xl font-bold text-[#0F2E24] tracking-tight">Farmculture</h1>
         </div>
 
         {/* Heading */}
