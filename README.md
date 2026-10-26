@@ -4,128 +4,186 @@ Farmculture AI is a production-engineered agronomy software platform designed fo
 
 ---
 
-## 🎨 Enterprise Design System & Tokens
+## End-to-End System Architecture
 
-Farmculture AI enforces a restrained, high-contrast agronomic visual palette. **Blue, purple, and indigo accents are strictly prohibited** in presentation layers.
+The diagrams below describe the application structure and user journey implemented in this repository. They separate external data sources and demonstration features rather than presenting simulations as live integrations.
 
-### 1. Color Ramp & CSS Variables
-All tokens are defined in `src/index.css` and map directly to Tailwind utilities:
+### 1. Platform architecture: entry point to output
 
-```css
-:root {
-  /* Brand: Modern Agronomy Lab */
-  --color-forest-deep: #0F2E24;     /* Primary brand, headers, high-contrast text */
-  --color-forest-mid: #1C4A3A;      /* Primary interactive controls, cards */
-  --color-forest-light: #265B47;    /* Secondary hover states */
-  --color-forest-subtle: #EDF4F0;   /* Light tint background */
+\`\`\`mermaid
+flowchart TD
+    A[Farmer / FPO / Agricultural Advisor] --> B[Browser or Mobile Web]
+    B --> C[Vercel Hosted React + TypeScript SPA]
+    C --> D[React Router]
+    D --> E[Application Shell: Header, Sidebar, Footer]
+    E --> F[Language and Region Preferences]
+    F --> G{Selected Feature}
+    G --> H[Public Agricultural Tools]
+    G --> I[Account and Farm Workspace]
+    G --> J[Experimental Demonstrations]
+    H --> K[Market Prices / Weather / Crop Diagnosis / Schemes]
+    I --> L{Firebase Authentication}
+    L -->|Verified signed-in user| M[Protected Dashboard and Profile]
+    L -->|Not authenticated| N[Sign In / Verification Flow]
+    M --> O[Farm Records / Crop Records / Assessments]
+    O --> P[(Cloud Firestore)]
+    K --> Q[Domain Services and External Sources]
+    Q --> R[Market Data Sources / Open-Meteo]
+    K --> S[Crop Image Assessment]
+    S --> T[Result with uncertainty and advisory limits]
+    J --> U[Demo-labelled Predictor / Drone / Remote Sensing / Irrigation / Traceability]
+    P --> V[User-facing records and history]
+    R --> W[Source-labelled market and weather results]
+    U --> X[Clearly labelled sample outputs]
+\`\`\`
 
-  /* Accent & Highlights */
-  --color-lime-leaf: #9BE564;       /* Primary accent, badges, focus highlights */
-  --color-lime-soft: #E8F9DC;       /* Muted accent badge background */
-  --color-lime-dark: #3F7517;       /* High-contrast accessible text on lime */
+### 2. User workflow: from visiting the site to using a service
 
-  /* Semantic Status Tokens (AA Compliant in Light & Dark Mode) */
-  --color-success: #2F9E6B;         /* Nominal / healthy states */
-  --color-warning: #E9A23B;         /* Saffron / moderate advisory states */
-  --color-danger: #C8553D;          /* Terracotta / high severity alerts */
-  --color-info: #3E8E8A;            /* Deep teal / information */
+\`\`\`mermaid
+flowchart TD
+    Start([Open Farmculture AI]) --> Home[Landing Page / Choose Language and Region]
+    Home --> Choice{Choose workflow}
+    Choice -->|Browse tools| Public[Open Public Feature]
+    Choice -->|Manage farm| Auth{Authenticated and authorized?}
+    Auth -->|No| Login[Sign in / Register]
+    Login --> Verify[Complete required email verification]
+    Verify --> Auth
+    Auth -->|Yes| Dashboard[Farm Dashboard]
+    Dashboard --> CRUD[Create / View / Update Farm and Crop Records]
+    CRUD --> Rules[Firestore Rules / Ownership Checks]
+    Rules --> Database[(Firestore User Data)]
+    Database --> Dashboard
+    Public --> Domain{Feature type}
+    Domain -->|Market| Market[Request market quotes]
+    Domain -->|Weather| Weather[Request weather observations]
+    Domain -->|Crop diagnosis| Diagnosis[Validate and assess crop input]
+    Domain -->|Experimental| Demo[Load clearly-labelled demonstration]
+    Market --> Provenance[Display source / location / currency / freshness]
+    Weather --> Provenance
+    Diagnosis --> Caution[Display bounded result, uncertainty, and next steps]
+    Demo --> Disclosure[Display demonstration and limitations]
+    Provenance --> End([User reviews the result])
+    Caution --> End
+    Disclosure --> End
+\`\`\`
 
-  /* Neutral Stone & Sand Palette */
-  --color-paper: #F6F4EE;           /* Warm background */
-  --color-surface: #FFFFFF;         /* Card background */
-  --color-stone-50: #FAF9F5;        /* Subtle container fill */
-  --color-stone-200: #E7E3D8;       /* Hairline borders */
-  --color-stone-500: #787266;       /* Accessible secondary text (≥4.5:1) */
-  --color-stone-900: #1B1F1C;       /* Primary body text */
-}
-```
+### 3. Authentication and user-data boundary
 
-### 2. Typography & Numbers
-- **Display Headings:** `Bricolage Grotesque` (`font-display`), tracking `-0.025em`.
-- **UI & Multi-Script Body:** `Plus Jakarta Sans` with fallback to `Noto Sans Devanagari` (Hindi/Marathi), `Noto Sans Tamil`, `Noto Sans Telugu`, and `Cairo` (Arabic).
-- **Tabular Numerals:** Always use `.tabular-nums` for financial rates, yield figures, and acreage to ensure fixed-width character alignment.
+\`\`\`mermaid
+sequenceDiagram
+    actor User
+    participant UI as React Application
+    participant Auth as Firebase Authentication
+    participant Guard as ProtectedRoute
+    participant DB as Cloud Firestore
+    User->>UI: Open dashboard
+    UI->>Auth: Observe sign-in state
+    Auth-->>UI: Current user or signed-out state
+    UI->>Guard: Evaluate protected route
+    alt Signed out or verification incomplete
+        Guard-->>User: Redirect to login / verification
+    else Signed in and permitted
+        Guard-->>UI: Render dashboard
+        UI->>DB: Read /users/{uid}/farms and crop records
+        Note over DB: Security rules must enforce ownership
+        DB-->>UI: Permitted user records
+        UI-->>User: Render farm workspace
+    end
+\`\`\`
 
-### 3. Spacing, Radii & Elevation
-- **Spacing:** Strict 4px base grid (`p-1`, `p-2`, `p-3`, `p-4`, `p-6`, `p-8`).
-- **Radii:** Standardized to `8px` (`rounded-lg`), `12px` (`rounded-xl`), and `16px` (`rounded-2xl`).
-- **Elevation:** Hairline borders (`border border-[#E7E3D8]`) combined with subtle shadows (`shadow-2xs`, `shadow-xs`, `shadow-sm`).
+### 4. Information provenance and trust boundaries
 
----
+| Feature | Input or integration | Output | Disclosure / boundary |
+| --- | --- | --- | --- |
+| Market prices | Market data service, including government and regional reference sources | Commodity quotes and formatted currencies | Check source, unit, market and observation timestamp before relying on a quote |
+| Weather | Open-Meteo weather integration | Regional forecast and weather information | Forecasts are estimates; cached or unavailable observations must not appear live |
+| Crop diagnosis | User-supplied crop images and assessment service | Bounded crop-health guidance | Do not present uncertain classifications as confirmed diagnosis |
+| Farmer dashboard | Authenticated records | Farm and crop history | Firebase Authentication plus server-enforced Firestore security rules |
+| Experimental modules | Sample data and simulation logic | Predictor, drone, remote-sensing and related demonstrations | Not equivalent to live hardware, verified satellite data or validated forecasting |
 
-## 🌐 How to Add a New Language (i18n Architecture)
+### 5. Localization and presentation pipeline
 
-The internationalization layer is typed and supports 10 locales: English (`en-IN`), Hindi (`hi-IN`), Tamil (`ta-IN`), Telugu (`te-IN`), Marathi (`mr-IN`), French (`fr-FR`), Spanish (`es-ES`), German (`de-DE`), Polish (`pl-PL`), and Arabic (`ar-KW` with automatic RTL).
+\`\`\`mermaid
+flowchart LR
+    A[User locale and region selection] --> B[localeConfig.ts]
+    B --> C[LanguageContext dictionary]
+    B --> D[LocalizationContext]
+    C --> E[Translated UI labels]
+    D --> F[Date / Number / Currency formatting]
+    E --> G[Accessible React UI]
+    F --> G
+    G --> H[Responsive light / dark presentation]
+\`\`\`
 
-### Step-by-Step Guide:
+The repository defines ten base translation languages in \`src/contexts/LanguageContext.tsx\` and 16 locale variants in \`src/lib/localeConfig.ts\`. Region, interface language and currency are separate settings. Arabic is an RTL language. To add a language, update the supported locale types and language dictionary, provide translated user-facing strings, then run localization tests. Do not assume adding a locale code alone translates every page.
 
-1. **Register the Locale Type in `src/lib/localeConfig.ts`:**
-   ```typescript
-   export type SupportedLocale = 'en-IN' | 'hi-IN' | 'ta-IN' | 'bn-IN' | ...;
-   export const SUPPORTED_LOCALES: SupportedLocale[] = [...];
-   ```
+### 6. Design-system implementation
 
-2. **Add the Translation Dictionary in `src/contexts/LanguageContext.tsx`:**
-   Add a new language table to `dict`:
-   ```typescript
-   export const dict: Record<Lang, any> = {
-     en: { ... },
-     hi: { ... },
-     bn: {
-       "welcome": "ফার্মকালচারে স্বাগতম",
-       "health.title": "ফসল স্বাস্থ্য মনিটর",
-       ...
-     }
-   };
-   ```
+| Layer | Implementation |
+| --- | --- |
+| Colors | Forest green \`#0F2E24\`, lime \`#9BE564\`, warm paper \`#F6F4EE\`, semantic status colors |
+| Typography | Bricolage Grotesque headings; Plus Jakarta Sans and script-specific fallbacks for body text |
+| UI primitives | Custom Button, Badge, FeatureCard and shared application/navigation components |
+| Spacing and surfaces | Consistent Tailwind spacing utilities, neutral borders and restrained elevation |
+| Accessibility | Semantic landmarks, keyboard focus styles, responsive navigation and localized content |
 
-3. **Intl Formatting Integration:**
-   Formatting for dates, relative time, and currency is handled automatically by `src/lib/formatters.ts`:
-   - `formatDate(date, locale)`
-   - `formatRelativeTime(isoString, locale)`
-   - `formatCurrencyINR(amount, locale)`
-   - `pluralizeIssues(count, locale)`
+Primary design tokens are in [\`src/index.css\`](src/index.css); see [\`docs/design-system.md\`](docs/design-system.md) for the reference guide. Actual contrast, motion preferences and multilingual layouts require browser-level verification.
 
-4. **Verify Translation Completeness:**
-   Run the automated Vitest dictionary suite to verify zero missing keys:
-   ```bash
-   npx vitest run src/test/localizationCompleteness.test.ts
-   ```
+### 7. Development-to-release workflow
 
----
+\`\`\`mermaid
+flowchart TD
+    A[Clone Repository] --> B[Install Node.js and Dependencies]
+    B --> C[Configure Local Environment from .env.example]
+    C --> D[Run Vite Development Server]
+    D --> E[Implement or Review Changes]
+    E --> F[Run Lint]
+    F --> G[Run Automated Vitest Suite]
+    G --> H[Run TypeScript and Production Build]
+    H --> I{All checks pass?}
+    I -->|No| E
+    I -->|Yes| J[Review Firebase Security Rules and Data Access]
+    J --> K[Verify Routes, Mobile Layout, Localization and Accessibility]
+    K --> L[Commit and Review Pull Request]
+    L --> M[Merge through approved workflow]
+    M --> N[Deploy Hosting and Required Firebase Configuration]
+    N --> O[Post-deployment Smoke Tests and Operational Monitoring]
+    O --> P([Production Release])
+\`\`\`
 
-## 🛡️ Data Provenance & Real Data vs Demonstration
-
-| Data Domain | Provider / Source | Update Cadence | Behavior / Status |
-| :--- | :--- | :--- | :--- |
-| **Hyperlocal Weather** | Open-Meteo High-Resolution Ensemble Models (DWD ICON / ECMWF) | 15 Minutes | Live API with cached regional fallback |
-| **APMC Mandi Rates** | Government of India AGMARKNET & data.gov.in wholesale records | Daily | Real quotes per kg/quintal |
-| **Foliar Diagnosis** | Client TensorFlow vision model + KVK advisory rules | Real-Time | Bounded decision support |
-| **Crop Health Remote Sensing** | Sentinel-2 multispectral vegetation index simulation | Periodic Sample Pass | Isolated sample data behind a dismissible banner |
-| **Market Predictor** | Econometric seasonal heuristic models | On-Demand | Forecast simulation (not yet backtested) |
-
----
-
-## 🚀 Development & Testing Commands
-
-```bash
-# Install dependencies
+\`\`\`bash
 npm install
-
-# Start local development server (Vite)
 npm run dev
-
-# Run Vitest automated test suite (20 suites, 91 tests)
+npm run lint
 npm test
-
-# Production build & TypeScript check
 npm run build
-```
+npm run i18n:check
+\`\`\`
 
----
+These commands are available in [\`package.json\`](package.json). The diagrams specify the expected release process; they do **not** certify that a particular deployment passed every gate.
 
-## 📋 Production Readiness Matrix & Audit History
+### 8. Repository structure and engineering references
 
-For comprehensive audit logs, checklist evaluations, and security registers:
-- [`docs/audit/reel-checklist-assessment.md`](docs/audit/reel-checklist-assessment.md) — 10-point technical web quality audit.
-- [`docs/audit/defect-register.md`](docs/audit/defect-register.md) — Issue registry & verified resolutions.
-- [`docs/readiness-matrix.md`](docs/readiness-matrix.md) — Enterprise readiness matrix across all modules.
+\`\`\`text
+src/
+  App.tsx                 # React Router and application layout
+  app/                    # Login and dashboard views
+  components/             # Agricultural features and reusable UI
+  contexts/               # Authentication, language and localization
+  lib/                    # Service and integration logic
+  pages/                  # Informational and account pages
+  test/                   # Automated test suites
+docs/
+  architecture/           # Detailed system and data-flow notes
+  audit/                  # Findings, issue records and checklists
+\`\`\`
+
+- [Current architecture](docs/architecture/current-system.md)
+- [Data flow](docs/architecture/data-flow.md)
+- [Design system](docs/design-system.md)
+- [Security findings](docs/audit/security-findings.md)
+- [Readiness matrix](docs/readiness-matrix.md)
+- [Testing guidance](docs/testing.md)
+- [Deployment checklist](docs/deployment-checklist.md)
+
+**Release status:** Repository documentation is a reference, not independent evidence of production readiness. Verify current CI results, deployed Firebase rules, email verification behavior, external data freshness and end-to-end user workflows before making a production-readiness claim.
